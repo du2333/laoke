@@ -39,3 +39,27 @@ export const listPresetsResponseSchema = z
 export type CreateMeetingResponse = z.infer<typeof createMeetingResponseSchema>;
 export type IssueTokenResponse = z.infer<typeof issueTokenResponseSchema>;
 export type ListPresetsResponse = z.infer<typeof listPresetsResponseSchema>;
+
+// Room schemas
+export const roomSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  meetingId: z.string(),
+  hostId: z.string(),
+  createdAt: z.number(),
+});
+
+export const createRoomRequestSchema = z.object({
+  roomName: z.string().min(1).max(50),
+  hostId: z.string().min(1),
+  hostName: z.string().min(1).max(20),
+});
+
+export const joinRoomRequestSchema = z.object({
+  userId: z.string().min(1),
+  userName: z.string().min(1).max(20),
+});
+
+export type Room = z.infer<typeof roomSchema>;
+export type CreateRoomRequest = z.infer<typeof createRoomRequestSchema>;
+export type JoinRoomRequest = z.infer<typeof joinRoomRequestSchema>;

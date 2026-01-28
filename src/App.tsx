@@ -1,49 +1,42 @@
-import { useState } from "react";
-import { api } from "./lib/api-client";
+import { useState, useCallback } from "react";
+import { useUser } from "./hooks/useUser";
+import { HomePage } from "./pages/HomePage";
+import { RoomPage } from "./pages/RoomPage";
+import { saveLastRoomId } from "./lib/storage/room";
+import type { AppPage, RoomSession } from "./types";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const [name, setName] = useState("unknown");
+  const { user, loading, saveUser } = useUser();
+  const [page, setPage] = useState<AppPage>("home");
+  const [roomSession, setRoomSession] = useState<RoomSession | null>(null);
 
-  const fetchHello = async () => {
-    const res = await api.api.hello.$get();
-    const data = await res.json();
+  const handleJoinRoom = useCallback((session: RoomSession) => {
+    saveLastRoomId(session.room.id);
+    setRoomSession(session);
+    setPage("room");
+  }, []);
 
-    setName(data.message);
-  };
+  const handleLeaveRoom = useCallback(() => {
+    setRoomSession(null);
+    setPage("home");
+  }, []);
+
+  // Show loading while checking localStorage
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  // Render current page
+  if (page === "room" && roomSession) {
+    return <RoomPage session={roomSession} onLeave={handleLeaveRoom} />;
+  }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center p-6 sm:p-12 font-sans selection:bg-slate-900 selection:text-white">
-      <main className="w-full max-w-sm space-y-12">
-        <h1 className="text-2xl font-semibold tracking-tight">Stack</h1>
-
-        <div className="space-y-4">
-          <button
-            onClick={() => setCount((count) => count + 1)}
-            className="group flex w-full items-center justify-between border-b border-slate-100 py-4 transition-colors hover:border-slate-900"
-            aria-label="increment"
-          >
-            <span className="text-sm font-medium text-slate-500 group-hover:text-slate-900 transition-colors">
-              Count
-            </span>
-            <span className="text-sm font-mono tabular-nums">{count}</span>
-          </button>
-
-          <button
-            onClick={fetchHello}
-            className="group flex w-full items-center justify-between border-b border-slate-100 py-4 transition-colors hover:border-slate-900"
-            aria-label="get name"
-          >
-            <span className="text-sm font-medium text-slate-500 group-hover:text-slate-900 transition-colors">
-              Fetch
-            </span>
-            <span className="text-sm italic text-slate-900 transition-opacity">
-              {name}
-            </span>
-          </button>
-        </div>
-      </main>
-    </div>
+    <HomePage user={user} onSaveUser={saveUser} onJoinRoom={handleJoinRoom} />
   );
 }
 
