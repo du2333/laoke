@@ -1,23 +1,23 @@
 import { useState, useCallback } from "react";
 import { useUser } from "./hooks/useUser";
 import { HomePage } from "./pages/HomePage";
-import { RoomPage } from "./pages/RoomPage";
-import { saveLastRoomId } from "./lib/storage/room";
-import type { AppPage, RoomSession } from "./types";
+import { MeetingPage } from "./pages/MeetingPage";
+import type { AppPage, MeetingSession } from "./types";
 
 function App() {
   const { user, loading, saveUser } = useUser();
   const [page, setPage] = useState<AppPage>("home");
-  const [roomSession, setRoomSession] = useState<RoomSession | null>(null);
+  const [meetingSession, setMeetingSession] = useState<MeetingSession | null>(
+    null,
+  );
 
-  const handleJoinRoom = useCallback((session: RoomSession) => {
-    saveLastRoomId(session.room.id);
-    setRoomSession(session);
-    setPage("room");
+  const handleJoinMeeting = useCallback((session: MeetingSession) => {
+    setMeetingSession(session);
+    setPage("meeting");
   }, []);
 
-  const handleLeaveRoom = useCallback(() => {
-    setRoomSession(null);
+  const handleLeaveMeeting = useCallback(() => {
+    setMeetingSession(null);
     setPage("home");
   }, []);
 
@@ -25,18 +25,24 @@ function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+        <div className="text-white">加载中...</div>
       </div>
     );
   }
 
   // Render current page
-  if (page === "room" && roomSession) {
-    return <RoomPage session={roomSession} onLeave={handleLeaveRoom} />;
+  if (page === "meeting" && meetingSession) {
+    return (
+      <MeetingPage session={meetingSession} onLeave={handleLeaveMeeting} />
+    );
   }
 
   return (
-    <HomePage user={user} onSaveUser={saveUser} onJoinRoom={handleJoinRoom} />
+    <HomePage
+      user={user}
+      onSaveUser={saveUser}
+      onJoinMeeting={handleJoinMeeting}
+    />
   );
 }
 

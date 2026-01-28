@@ -4,17 +4,9 @@ export interface User {
   createdAt: number;
 }
 
-export interface Room {
-  id: string;
-  name: string;
+export interface MeetingSession {
   meetingId: string;
-  hostId: string;
-  createdAt: number;
-}
-
-export interface RoomSession {
-  room: Room;
   authToken: string;
 }
 
-export type AppPage = "home" | "room";
+export type AppPage = "home" | "meeting";

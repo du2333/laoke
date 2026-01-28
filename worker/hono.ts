@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-import { roomsRoute } from "./routes/rooms";
+import { meetingRoute } from "./routes/meeting";
 
-const app = new Hono<{ Bindings: Env }>().route("/api/rooms", roomsRoute);
+const app = new Hono<{ Bindings: Env }>().route("/api", meetingRoute);
 
 export type AppType = typeof app;
 export default app;

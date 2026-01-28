@@ -10,7 +10,4 @@
   "observability": {
     "enabled": true,
   },
-  "kv_namespaces": [
-    { "binding": "ROOMS_KV" },
-  ],
 }

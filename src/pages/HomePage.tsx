@@ -1,24 +1,27 @@
 import { useState, useEffect } from "react";
 import { api } from "../lib/api-client";
-import { getLastRoomId, clearLastRoomId } from "../lib/storage/room";
-import type { User, RoomSession } from "../types";
+import {
+  getLastMeetingId,
+  saveLastMeetingId,
+  clearLastMeetingId,
+} from "../lib/storage/meeting";
+import type { User, MeetingSession } from "../types";
 
 interface HomePageProps {
   user: User | null;
   onSaveUser: (name: string) => User;
-  onJoinRoom: (session: RoomSession) => void;
+  onJoinMeeting: (session: MeetingSession) => void;
 }
 
-export function HomePage({ user, onSaveUser, onJoinRoom }: HomePageProps) {
+export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
   const [userName, setUserName] = useState("");
-  const [roomName, setRoomName] = useState("");
-  const [roomCode, setRoomCode] = useState("");
+  const [meetingId, setMeetingId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastRoomId, setLastRoomId] = useState<string | null>(null);
+  const [lastMeetingId, setLastMeetingId] = useState<string | null>(null);
 
   useEffect(() => {
-    setLastRoomId(getLastRoomId());
+    setLastMeetingId(getLastMeetingId());
   }, []);
 
   // If no user, show name input first
@@ -56,49 +59,17 @@ export function HomePage({ user, onSaveUser, onJoinRoom }: HomePageProps) {
     );
   }
 
-  const handleCreateRoom = async () => {
-    if (!roomName.trim()) return;
+  const handleJoinMeeting = async (targetMeetingId?: string) => {
+    const id = targetMeetingId || meetingId.trim();
+    if (!id) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const res = await api.api.rooms.$post({
+      const res = await api.api.join.$post({
         json: {
-          roomName: roomName.trim(),
-          hostId: user.id,
-          hostName: user.name,
-        },
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error((data as { error?: string }).error || "创建房间失败");
-      }
-
-      const data = await res.json();
-      onJoinRoom({
-        room: data.room,
-        authToken: data.authToken,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "创建房间失败");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleJoinRoom = async (roomIdToJoin?: string) => {
-    const targetRoomId = roomIdToJoin || roomCode.trim().toUpperCase();
-    if (!targetRoomId) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await api.api.rooms[":id"].join.$post({
-        param: { id: targetRoomId },
-        json: {
+          meetingId: id,
           userId: user.id,
           userName: user.name,
         },
@@ -106,29 +77,29 @@ export function HomePage({ user, onSaveUser, onJoinRoom }: HomePageProps) {
 
       if (!res.ok) {
         const data = await res.json();
-        // If room not found and we were trying to rejoin, clear the saved room
-        if (roomIdToJoin) {
-          clearLastRoomId();
-          setLastRoomId(null);
+        if (targetMeetingId) {
+          clearLastMeetingId();
+          setLastMeetingId(null);
         }
-        throw new Error((data as { error?: string }).error || "房间不存在");
+        throw new Error((data as { error?: string }).error || "加入失败");
       }
 
       const data = await res.json();
-      onJoinRoom({
-        room: data.room,
+      saveLastMeetingId(id);
+      onJoinMeeting({
+        meetingId: id,
         authToken: data.authToken,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "加入房间失败");
+      setError(err instanceof Error ? err.message : "加入失败");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleClearLastRoom = () => {
-    clearLastRoomId();
-    setLastRoomId(null);
+  const handleClearLastMeeting = () => {
+    clearLastMeetingId();
+    setLastMeetingId(null);
   };
 
   return (
@@ -149,23 +120,25 @@ export function HomePage({ user, onSaveUser, onJoinRoom }: HomePageProps) {
           </div>
         )}
 
-        {/* Rejoin last room */}
-        {lastRoomId && (
+        {/* Rejoin last meeting */}
+        {lastMeetingId && (
           <div className="bg-slate-800 rounded-2xl p-6 border border-blue-500/50">
-            <h2 className="text-lg font-semibold text-white mb-2">上次的房间</h2>
-            <p className="text-slate-400 mb-4 font-mono text-center text-xl tracking-widest">
-              {lastRoomId}
+            <h2 className="text-lg font-semibold text-white mb-2">
+              上次的会议
+            </h2>
+            <p className="text-slate-400 mb-4 font-mono text-sm break-all">
+              {lastMeetingId}
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => handleJoinRoom(lastRoomId)}
+                onClick={() => handleJoinMeeting(lastMeetingId)}
                 disabled={loading}
                 className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
               >
                 {loading ? "加入中..." : "重新加入"}
               </button>
               <button
-                onClick={handleClearLastRoom}
+                onClick={handleClearLastMeeting}
                 disabled={loading}
                 className="px-4 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-600 disabled:cursor-not-allowed text-slate-300 rounded-lg transition-colors"
               >
@@ -175,52 +148,23 @@ export function HomePage({ user, onSaveUser, onJoinRoom }: HomePageProps) {
           </div>
         )}
 
-        {/* Create Room */}
+        {/* Join Meeting */}
         <div className="bg-slate-800 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">创建房间</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">加入会议</h2>
           <input
             type="text"
-            value={roomName}
-            onChange={(e) => setRoomName(e.target.value)}
-            placeholder="房间名称"
-            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-            maxLength={50}
+            value={meetingId}
+            onChange={(e) => setMeetingId(e.target.value)}
+            placeholder="输入 Meeting ID"
+            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 font-mono text-sm"
             disabled={loading}
           />
           <button
-            onClick={handleCreateRoom}
-            disabled={!roomName.trim() || loading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-          >
-            {loading ? "创建中..." : "创建房间"}
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 h-px bg-slate-700" />
-          <span className="text-slate-500 text-sm">或</span>
-          <div className="flex-1 h-px bg-slate-700" />
-        </div>
-
-        {/* Join Room */}
-        <div className="bg-slate-800 rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">加入房间</h2>
-          <input
-            type="text"
-            value={roomCode}
-            onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            placeholder="输入6位房间号"
-            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 mb-4 uppercase tracking-widest text-center font-mono"
-            maxLength={6}
-            disabled={loading}
-          />
-          <button
-            onClick={() => handleJoinRoom()}
-            disabled={roomCode.length !== 6 || loading}
+            onClick={() => handleJoinMeeting()}
+            disabled={!meetingId.trim() || loading}
             className="w-full py-3 bg-green-600 hover:bg-green-500 disabled:bg-slate-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
           >
-            {loading ? "加入中..." : "加入房间"}
+            {loading ? "加入中..." : "加入会议"}
           </button>
         </div>
       </div>
