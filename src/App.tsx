@@ -3,6 +3,7 @@ import { useUser } from "./hooks/useUser";
 import { HomePage } from "./pages/HomePage";
 import { MeetingPage } from "./pages/MeetingPage";
 import type { AppPage, MeetingSession } from "./types";
+import { Toaster } from "sonner";
 
 function App() {
   const { user, loading, saveUser } = useUser();
@@ -24,25 +25,25 @@ function App() {
   // Show loading while checking localStorage
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-white">加载中...</div>
       </div>
     );
   }
 
-  // Render current page
-  if (page === "meeting" && meetingSession) {
-    return (
-      <MeetingPage session={meetingSession} onLeave={handleLeaveMeeting} />
-    );
-  }
-
   return (
-    <HomePage
-      user={user}
-      onSaveUser={saveUser}
-      onJoinMeeting={handleJoinMeeting}
-    />
+    <>
+      {page === "meeting" && meetingSession ? (
+        <MeetingPage session={meetingSession} onLeave={handleLeaveMeeting} />
+      ) : (
+        <HomePage
+          user={user}
+          onSaveUser={saveUser}
+          onJoinMeeting={handleJoinMeeting}
+        />
+      )}
+      <Toaster position="top-center" theme="dark" richColors />
+    </>
   );
 }
 
