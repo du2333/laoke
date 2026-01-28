@@ -7,11 +7,12 @@
 		"dev": "vite",
 		"build": "tsc -b && vite build",
 		"lint": "eslint .",
-		"preview": "pnpm run build && vite preview",
-		"deploy": "pnpm run build && wrangler deploy",
+		"preview": "bun run build && vite preview",
+		"deploy": "bun run build && wrangler deploy",
 		"cf-typegen": "wrangler types"
 	},
 	"dependencies": {
+		"hono": "^4.11.7",
 		"react": "^19.1.1",
 		"react-dom": "^19.1.1"
 	},
