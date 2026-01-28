@@ -1,7 +1,7 @@
 import { Hono } from "hono";
-const app = new Hono<{ Bindings: Env }>().get("/api/hello", (c) =>
-  c.json({ message: "Hello Cloudflare Workers!" }),
-);
+import { realtime } from "./lib/realtime";
+
+const app = new Hono<{ Bindings: Env }>().route("/api", realtime);
 
 export type AppType = typeof app;
 export default app;
