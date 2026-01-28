@@ -1,0 +1,65 @@
+name: deploy to cloudflare workers
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun ci
+
+      - name: "[Vault] Import cloudflare secrets"
+        uses: hashicorp/vault-action@v3
+        with:
+          url: https://vault.dukda.com
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            secrets/data/cloudflare *
+
+      - name: "[Vault] Import runtime secrets"
+        uses: hashicorp/vault-action@v3
+        with:
+          url: https://vault.dukda.com
+          token: ${{ secrets.VAULT_TOKEN }}
+          secrets: |
+            secrets/data/laoke *
+
+      - name: Generate Secrets JSON
+        run: |
+          cat <<EOF > secrets.json
+          {
+            "CLOUDFLARE_ACCOUNT_ID": "$CLOUDFLARE_ACCOUNT_ID",
+            "REALTIME_APP_ID": "$REALTIME_APP_ID",
+            "REALTIME_API_TOKEN": "$REALTIME_API_TOKEN"
+          }
+          EOF
+
+      - name: Deploy to Cloudflare Workers
+        run: |
+          bunx wrangler secret bulk secrets.json
+          bun run deploy
