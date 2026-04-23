@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import type { AppPage } from "@/lib/schema/app";
 import type { MeetingSession } from "@/lib/schema/meeting";
 
@@ -8,15 +8,15 @@ export function useMeetingSession() {
     null,
   );
 
-  const joinMeeting = useCallback((session: MeetingSession) => {
+  function joinMeeting(session: MeetingSession) {
     setMeetingSession(session);
     setPage("meeting");
-  }, []);
+  }
 
-  const leaveMeeting = useCallback(() => {
+  function leaveMeeting() {
     setMeetingSession(null);
     setPage("home");
-  }, []);
+  }
 
   return {
     page,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { User } from "@/lib/schema/user";
 import {
   getUser,
@@ -16,18 +16,18 @@ export function useUser() {
     setLoading(false);
   }, []);
 
-  const saveUser = useCallback((name: string) => {
+  function saveUser(name: string) {
     const newUser = saveUserToStorage(name);
     setUser(newUser);
     return newUser;
-  }, []);
+  }
 
-  const updateUserName = useCallback((name: string) => {
+  function updateUserName(name: string) {
     const updatedUser = updateUserNameInStorage(name);
     if (!updatedUser) return null;
     setUser(updatedUser);
     return updatedUser;
-  }, []);
+  }
 
   return { user, loading, saveUser, updateUserName };
 }
