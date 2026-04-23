@@ -142,11 +142,10 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
         },
       });
 
-      if (!joinRes.ok) {
+      if (joinRes.status !== 200) {
         const data = await joinRes.json();
         throw new Error((data as { error?: string }).error || "加入失败");
       }
-
       const data = await joinRes.json();
       const metadata = await queryClient
         .fetchQuery({
