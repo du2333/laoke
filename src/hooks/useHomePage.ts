@@ -37,6 +37,7 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
   const [userName, setUserName] = useState("");
   const [meetingId, setMeetingId] = useState("");
   const [meetingHistory, setMeetingHistory] = useState<MeetingHistoryItem[]>([]);
+  const [isEditingName, setIsEditingName] = useState(false);
 
   function handleSaveUser() {
     const name = userName.trim();
@@ -185,6 +186,8 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
     setUserName,
     meetingId,
     setMeetingId,
+    isEditingName,
+    setIsEditingName,
     loading: joinMeetingMutation.isPending,
     meetingHistory: recentMeetings,
     handleSaveUser,
