@@ -12,8 +12,8 @@
   },
   "routes": [
     {
-      "custom_domain": true,
-      "pattern": "laoke.dukda.com",
+      "pattern": "laoke.dukda.com/*",
+      "zone_name": "dukda.com",
     },
   ],
 }
