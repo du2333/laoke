@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type {
   MeetingHistoryItem,
@@ -36,7 +36,6 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
   const queryClient = useQueryClient();
   const [userName, setUserName] = useState("");
   const [meetingId, setMeetingId] = useState("");
-  const [loading, setLoading] = useState(false);
   const [meetingHistory, setMeetingHistory] = useState<MeetingHistoryItem[]>([]);
 
   function handleSaveUser() {
@@ -98,63 +97,81 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
     };
   });
 
-  async function handleJoinMeeting(targetId?: string) {
-    if (!user) return;
-
-    const id = targetId || meetingId.trim();
-    if (!id) return;
-
-    setLoading(true);
-    const toastId = toast.loading("正在加入频道...");
-
-    try {
+  const joinMeetingMutation = useMutation({
+    mutationFn: async ({
+      meetingId,
+      currentUser,
+    }: {
+      meetingId: string;
+      currentUser: User;
+    }) => {
       const joinRes = await api.api.join.$post({
         json: {
-          meetingId: id,
-          userId: user.id,
-          userName: user.name,
+          meetingId,
+          userId: currentUser.id,
+          userName: currentUser.name,
         },
       });
 
       if (!joinRes.ok) {
         const data = await joinRes.json();
-        if (targetId) {
-          setMeetingHistory(removeMeetingId(targetId));
-        }
         throw new Error((data as { error?: string }).error || "加入失败");
       }
 
       const data = await joinRes.json();
       const metadata = await queryClient
         .fetchQuery({
-          queryKey: meetingMetadataQueryKey(id),
-          queryFn: () => fetchMeetingMetadata(id),
+          queryKey: meetingMetadataQueryKey(meetingId),
+          queryFn: () => fetchMeetingMetadata(meetingId),
           staleTime: 30_000,
         })
         .catch(() => null);
 
+      return {
+        meetingId,
+        authToken: data.authToken,
+        metadata,
+      };
+    },
+  });
+
+  async function handleJoinMeeting(targetId?: string) {
+    if (!user) return;
+
+    const id = targetId || meetingId.trim();
+    if (!id) return;
+
+    const toastId = toast.loading("正在加入频道...");
+
+    try {
+      const result = await joinMeetingMutation.mutateAsync({
+        meetingId: id,
+        currentUser: user,
+      });
+
       setMeetingHistory(
         saveMeetingHistoryItem({
           meetingId: id,
-          meetingTitle: metadata?.meetingTitle ?? null,
+          meetingTitle: result.metadata?.meetingTitle ?? null,
           lastJoinedAt: Date.now(),
         }),
       );
       toast.dismiss(toastId);
       toast.success(
-        metadata?.isLive
-          ? `加入成功，当前 ${metadata.liveParticipants} 人在线`
+        result.metadata?.isLive
+          ? `加入成功，当前 ${result.metadata.liveParticipants} 人在线`
           : "加入成功",
       );
       onJoinMeeting({
         meetingId: id,
-        authToken: data.authToken,
+        authToken: result.authToken,
       });
     } catch (err) {
+      if (targetId) {
+        setMeetingHistory(removeMeetingId(targetId));
+      }
       toast.dismiss(toastId);
       toast.error(err instanceof Error ? err.message : "加入失败");
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -168,7 +185,7 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
     setUserName,
     meetingId,
     setMeetingId,
-    loading,
+    loading: joinMeetingMutation.isPending,
     meetingHistory: recentMeetings,
     handleSaveUser,
     handleJoinMeeting,
