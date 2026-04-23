@@ -1,16 +1,21 @@
+import { meetingIdSchema, type MeetingId } from "../schema/meeting";
+
 const STORAGE_KEY = "laoke_last_meeting";
 
-export function getLastMeetingId(): string | null {
+export function getLastMeetingId(): MeetingId | null {
   try {
-    return localStorage.getItem(STORAGE_KEY);
+    const result = meetingIdSchema.safeParse(localStorage.getItem(STORAGE_KEY));
+    return result.success ? result.data : null;
   } catch {
     return null;
   }
 }
 
-export function saveLastMeetingId(meetingId: string): void {
+export function saveLastMeetingId(meetingId: MeetingId): void {
   try {
-    localStorage.setItem(STORAGE_KEY, meetingId);
+    const result = meetingIdSchema.safeParse(meetingId);
+    if (!result.success) return;
+    localStorage.setItem(STORAGE_KEY, result.data);
   } catch {
     // Ignore storage errors
   }

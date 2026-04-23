@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRealtimeKitClient } from "@cloudflare/realtimekit-react";
 import { RtkMeeting } from "@cloudflare/realtimekit-react-ui";
-import type { MeetingSession } from "../types";
 import { Wifi } from "lucide-react";
+import type { MeetingSession } from "../lib/schema/meeting";
 import { cn } from "../lib/utils";
 
 interface MeetingPageProps {

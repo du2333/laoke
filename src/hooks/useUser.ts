@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { User } from "../types";
+import type { User } from "../lib/schema/user";
 import { getUser, saveUser as saveUserToStorage } from "../lib/storage/user";
 
 export function useUser() {
