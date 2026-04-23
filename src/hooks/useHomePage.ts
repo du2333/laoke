@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQueries, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type {
   MeetingHistoryItem,
@@ -7,7 +7,7 @@ import type {
   MeetingMetadata,
   MeetingSession,
 } from "@/lib/schema/meeting";
-import { meetingMetadataSchema } from "@/lib/schema/meeting";
+import { managedMeetingListSchema, meetingMetadataSchema } from "@/lib/schema/meeting";
 import type { User } from "@/lib/schema/user";
 import { api } from "@/lib/api-client";
 import {
@@ -32,10 +32,15 @@ type RecentMeeting = MeetingHistoryItem & {
 const meetingMetadataQueryKey = (meetingId: MeetingId) =>
   ["meeting-metadata", meetingId] as const;
 
+const ADMIN_TOKEN_STORAGE_KEY = "laoke-admin-token";
+
 export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOptions) {
   const queryClient = useQueryClient();
   const [userName, setUserName] = useState("");
   const [meetingId, setMeetingId] = useState("");
+  const [newMeetingTitle, setNewMeetingTitle] = useState("");
+  const [adminToken, setAdminToken] = useState("");
+  const [adminTokenInput, setAdminTokenInput] = useState("");
   const [meetingHistory, setMeetingHistory] = useState<MeetingHistoryItem[]>([]);
   const [isEditingName, setIsEditingName] = useState(false);
 
@@ -60,7 +65,30 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
 
   useEffect(() => {
     setMeetingHistory(getMeetingHistory());
+    const savedAdminToken = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) ?? "";
+    setAdminToken(savedAdminToken);
+    setAdminTokenInput(savedAdminToken);
   }, []);
+
+  const adminMeetingsQuery = useQuery({
+    queryKey: ["admin-meetings", adminToken],
+    queryFn: async () => {
+      const res = await api.api.admin.meetings.$get(undefined, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error((data as { error?: string }).error || "获取会议列表失败");
+      }
+
+      return managedMeetingListSchema
+        .parse(await res.json())
+        .meetings.filter((meeting) => meeting.status === "ACTIVE");
+    },
+    enabled: Boolean(adminToken),
+    staleTime: 15_000,
+  });
 
   const metadataQueries = useQueries({
     queries: meetingHistory.map((item) => ({
@@ -136,6 +164,45 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
     },
   });
 
+  const createMeetingMutation = useMutation({
+    mutationFn: async (title: string) => {
+      const res = await api.api.admin.meetings.$post(
+        { json: { title } },
+        { headers: { Authorization: `Bearer ${adminToken}` } },
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error((data as { error?: string }).error || "创建会议失败");
+      }
+
+      return res.json();
+    },
+    onSuccess: async () => {
+      setNewMeetingTitle("");
+      await adminMeetingsQuery.refetch();
+    },
+  });
+
+  const deactivateMeetingMutation = useMutation({
+    mutationFn: async (targetMeetingId: MeetingId) => {
+      const res = await api.api.admin.meetings[":meetingId"].deactivate.$patch(
+        { param: { meetingId: targetMeetingId } },
+        { headers: { Authorization: `Bearer ${adminToken}` } },
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error((data as { error?: string }).error || "删除会议失败");
+      }
+
+      return res.json();
+    },
+    onSuccess: async () => {
+      await adminMeetingsQuery.refetch();
+    },
+  });
+
   async function handleJoinMeeting(targetId?: string) {
     if (!user) return;
 
@@ -181,16 +248,69 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
     queryClient.removeQueries({ queryKey: meetingMetadataQueryKey(meetingId) });
   }
 
+  function handleSaveAdminToken() {
+    const token = adminTokenInput.trim();
+    if (!token) return;
+
+    localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+    setAdminToken(token);
+    toast.success("已进入管理模式");
+  }
+
+  function handleClearAdminToken() {
+    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    setAdminToken("");
+    setAdminTokenInput("");
+    queryClient.removeQueries({ queryKey: ["admin-meetings"] });
+  }
+
+  async function handleCreateMeeting() {
+    const title = newMeetingTitle.trim();
+    if (!title) return;
+
+    try {
+      await createMeetingMutation.mutateAsync(title);
+      toast.success("会议已创建");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "创建会议失败");
+    }
+  }
+
+  async function handleDeactivateMeeting(targetMeetingId: MeetingId) {
+    try {
+      await deactivateMeetingMutation.mutateAsync(targetMeetingId);
+      toast.success("会议已删除");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "删除会议失败");
+    }
+  }
+
   return {
     userName,
     setUserName,
     meetingId,
     setMeetingId,
+    newMeetingTitle,
+    setNewMeetingTitle,
+    adminToken,
+    adminTokenInput,
+    setAdminTokenInput,
     isEditingName,
     setIsEditingName,
     loading: joinMeetingMutation.isPending,
+    adminMeetings: adminMeetingsQuery.data ?? [],
+    adminMeetingsLoading: adminMeetingsQuery.isFetching,
+    adminMeetingsError: adminMeetingsQuery.error,
+    creatingMeeting: createMeetingMutation.isPending,
+    deactivatingMeetingId: deactivateMeetingMutation.isPending
+      ? deactivateMeetingMutation.variables
+      : undefined,
     meetingHistory: recentMeetings,
     handleSaveUser,
+    handleSaveAdminToken,
+    handleClearAdminToken,
+    handleCreateMeeting,
+    handleDeactivateMeeting,
     handleJoinMeeting,
     handleRemoveMeeting,
   };

@@ -22,8 +22,20 @@ export const meetingMetadataSchema = z.object({
   isLive: z.boolean(),
 });
 
+export const managedMeetingSchema = z.object({
+  meetingId: meetingIdSchema,
+  meetingTitle: z.string().nullable(),
+  status: z.string().nullable(),
+  createdAt: z.string().nullable(),
+});
+
+export const managedMeetingListSchema = z.object({
+  meetings: z.array(managedMeetingSchema),
+});
+
 export type MeetingId = z.infer<typeof meetingIdSchema>;
 export type MeetingHistoryItem = z.infer<typeof meetingHistoryItemSchema>;
 export type MeetingIdHistory = z.infer<typeof meetingIdHistorySchema>;
 export type MeetingSession = z.infer<typeof meetingSessionSchema>;
 export type MeetingMetadata = z.infer<typeof meetingMetadataSchema>;
+export type ManagedMeeting = z.infer<typeof managedMeetingSchema>;

@@ -21,7 +21,7 @@
 
 /* Base Body Styles */
 body {
-  @apply bg-zinc-950 text-zinc-100 antialiased overflow-hidden;
+  @apply bg-zinc-950 text-zinc-100 antialiased overflow-x-hidden;
   font-feature-settings: "ss01", "ss02", "cv01", "cv02";
 }
 

@@ -15,7 +15,31 @@ export const meetingMetadataResponseSchema = z.object({
   data: z.object({
     id: z.string(),
     title: z.string().optional(),
+    status: z.string().optional(),
+    created_at: z.string().optional(),
   }),
+});
+
+export const meetingResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.object({
+    id: z.string(),
+    title: z.string().nullable().optional(),
+    status: z.string().nullable().optional(),
+    created_at: z.string().nullable().optional(),
+  }),
+});
+
+export const meetingListResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string().nullable().optional(),
+      status: z.string().nullable().optional(),
+      created_at: z.string().nullable().optional(),
+    }),
+  ),
 });
 
 export const activeSessionResponseSchema = z.object({

@@ -1,4 +1,18 @@
-import { ArrowRight, History, Hash, Loader2, X, User as UserIcon, Check, Edit2 } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Copy,
+  Edit2,
+  History,
+  Hash,
+  KeyRound,
+  Loader2,
+  Plus,
+  Shield,
+  Trash2,
+  User as UserIcon,
+  X,
+} from "lucide-react";
 import type { MeetingSession } from "@/lib/schema/meeting";
 import type { User } from "@/lib/schema/user";
 import { useHomePage } from "@/hooks/useHomePage";
@@ -32,6 +46,18 @@ function formatLastJoinedAt(timestamp: number) {
   })} 加入`;
 }
 
+function formatCreatedAt(value: string | null) {
+  if (!value) return "创建时间未知";
+
+  return new Date(value).toLocaleDateString("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export function HomePage({
   user,
   onSaveUser,
@@ -43,11 +69,25 @@ export function HomePage({
     setUserName,
     meetingId,
     setMeetingId,
+    newMeetingTitle,
+    setNewMeetingTitle,
+    adminToken,
+    adminTokenInput,
+    setAdminTokenInput,
     loading,
+    adminMeetings,
+    adminMeetingsLoading,
+    adminMeetingsError,
+    creatingMeeting,
+    deactivatingMeetingId,
     meetingHistory,
     isEditingName,
     setIsEditingName,
     handleSaveUser,
+    handleSaveAdminToken,
+    handleClearAdminToken,
+    handleCreateMeeting,
+    handleDeactivateMeeting,
     handleJoinMeeting,
     handleRemoveMeeting,
   } = useHomePage({ user, onSaveUser, onJoinMeeting });
@@ -64,7 +104,7 @@ export function HomePage({
     <div className="relative min-h-screen flex items-center justify-center p-6 bg-zinc-950 overflow-hidden">
       <div className="bg-grain" />
 
-      <div className="relative z-10 w-full max-w-sm">
+      <div className="relative z-10 w-full max-w-4xl">
         {!user ? (
           <div key="onboarding" className="animate-in fade-in slide-in-from-bottom-12 duration-1000 ease-out">
             <div className="mb-16 text-center pointer-events-none select-none">
@@ -118,7 +158,8 @@ export function HomePage({
             </div>
           </div>
         ) : (
-          <div key="main-content" className="space-y-8 animate-in fade-in slide-in-from-bottom-12 duration-1000 ease-out">
+          <div key="main-content" className="grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr] animate-in fade-in slide-in-from-bottom-12 duration-1000 ease-out">
+            <div className="space-y-6">
             <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md">
               {isEditingName ? (
                 <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -292,6 +333,161 @@ export function HomePage({
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            </div>
+
+            <div className="bg-zinc-900/40 border border-white/10 rounded-2xl p-5 shadow-sm backdrop-blur-md min-h-90">
+              <div className="flex items-center justify-between gap-4 mb-5">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                    <Shield className="w-4 h-4" />
+                    管理会议
+                  </div>
+                  <p className="mt-2 text-sm text-zinc-500">
+                    创建会议、复制 ID、删除不用的会议
+                  </p>
+                </div>
+                {adminToken && (
+                  <button
+                    onClick={handleClearAdminToken}
+                    className="shrink-0 p-2 text-zinc-500 hover:text-zinc-200 rounded-lg hover:bg-white/5 transition-colors"
+                    title="退出管理"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {!adminToken ? (
+                <div className="space-y-4">
+                  <div className="relative group">
+                    <div className="absolute top-1/2 -translate-y-1/2 left-4 text-zinc-500 group-focus-within:text-blue-400 transition-colors">
+                      <KeyRound className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="password"
+                      value={adminTokenInput}
+                      onChange={(e) => setAdminTokenInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveAdminToken()}
+                      placeholder="输入管理密码"
+                      className="w-full bg-zinc-950/40 border border-white/10 rounded-2xl py-4 pl-12 pr-14 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium"
+                    />
+                    <div className="absolute top-1/2 -translate-y-1/2 right-2">
+                      <button
+                        onClick={handleSaveAdminToken}
+                        disabled={!adminTokenInput.trim()}
+                        className="flex items-center justify-center w-10 h-10 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white rounded-xl disabled:opacity-0 disabled:pointer-events-none transition-all duration-300"
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      value={newMeetingTitle}
+                      onChange={(e) => setNewMeetingTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCreateMeeting()}
+                      placeholder="新会议标题"
+                      className="w-full bg-zinc-950/40 border border-white/10 rounded-2xl py-4 pl-4 pr-14 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium"
+                      maxLength={80}
+                      disabled={creatingMeeting}
+                    />
+                    <div className="absolute top-1/2 -translate-y-1/2 right-2">
+                      <button
+                        onClick={handleCreateMeeting}
+                        disabled={!newMeetingTitle.trim() || creatingMeeting}
+                        className="flex items-center justify-center w-10 h-10 bg-blue-500/15 hover:bg-blue-500/25 text-blue-300 rounded-xl disabled:opacity-0 disabled:pointer-events-none transition-all duration-300"
+                        title="创建会议"
+                      >
+                        {creatingMeeting ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Plus className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {adminMeetingsError ? (
+                    <div className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                      {adminMeetingsError instanceof Error
+                        ? adminMeetingsError.message
+                        : "获取会议列表失败"}
+                    </div>
+                  ) : null}
+
+                  <div className="grid gap-3 max-h-107.5 overflow-y-auto pr-1">
+                    {adminMeetingsLoading && adminMeetings.length === 0 ? (
+                      <div className="flex items-center justify-center py-12 text-zinc-500">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      </div>
+                    ) : adminMeetings.length === 0 ? (
+                      <div className="rounded-2xl border border-white/10 bg-zinc-950/30 px-4 py-8 text-center text-sm text-zinc-500">
+                        还没有会议
+                      </div>
+                    ) : (
+                      adminMeetings.map((meeting) => (
+                        <div
+                          key={meeting.meetingId}
+                          className="group bg-zinc-950/30 border border-white/10 rounded-2xl p-4 hover:border-white/20 transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="truncate text-sm font-bold text-zinc-100">
+                                  {meeting.meetingTitle || meeting.meetingId}
+                                </p>
+                                {meeting.status ? (
+                                  <span className="shrink-0 rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                                    {meeting.status}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+                                <span className="font-mono">{meeting.meetingId}</span>
+                                <span className="opacity-40">•</span>
+                                <span>{formatCreatedAt(meeting.createdAt)}</span>
+                              </div>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => navigator.clipboard.writeText(meeting.meetingId)}
+                                className="p-2 text-zinc-500 hover:text-zinc-200 rounded-lg hover:bg-white/5 transition-colors"
+                                title="复制会议 ID"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleJoinMeeting(meeting.meetingId)}
+                                className="p-2 text-zinc-500 hover:text-zinc-200 rounded-lg hover:bg-white/5 transition-colors"
+                                title="加入会议"
+                              >
+                                <ArrowRight className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeactivateMeeting(meeting.meetingId)}
+                                disabled={deactivatingMeetingId === meeting.meetingId}
+                                className="p-2 text-zinc-500 hover:text-red-300 rounded-lg hover:bg-red-500/10 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                                title="删除会议"
+                              >
+                                {deactivatingMeetingId === meeting.meetingId ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
