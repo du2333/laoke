@@ -1,6 +1,8 @@
 import {
+  meetingHistoryItemSchema,
   meetingIdHistorySchema,
   meetingIdSchema,
+  type MeetingHistoryItem,
   type MeetingId,
   type MeetingIdHistory,
 } from "@/lib/schema/meeting";
@@ -10,7 +12,10 @@ const LEGACY_STORAGE_KEY = "laoke_last_meeting";
 const MAX_HISTORY_ITEMS = 10;
 
 function normalizeMeetingHistory(history: MeetingIdHistory): MeetingIdHistory {
-  return [...new Set(history)].slice(0, MAX_HISTORY_ITEMS);
+  return history
+    .filter((item, index, list) => list.findIndex((entry) => entry.meetingId === item.meetingId) === index)
+    .sort((a, b) => b.lastJoinedAt - a.lastJoinedAt)
+    .slice(0, MAX_HISTORY_ITEMS);
 }
 
 function readLegacyMeetingId(): MeetingId | null {
@@ -22,14 +27,36 @@ export function getMeetingHistory(): MeetingIdHistory {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const result = meetingIdHistorySchema.safeParse(JSON.parse(stored));
+      const parsed = JSON.parse(stored);
+      const result = meetingIdHistorySchema.safeParse(parsed);
       if (result.success) return normalizeMeetingHistory(result.data);
+
+      const legacyResult = meetingIdSchema.array().safeParse(parsed);
+      if (legacyResult.success) {
+        const migratedAt = Date.now();
+        const migratedHistory = normalizeMeetingHistory(
+          legacyResult.data.map((meetingId: MeetingId, index: number) => ({
+            meetingId,
+            meetingTitle: null,
+            lastJoinedAt: migratedAt - index,
+          })),
+        );
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migratedHistory));
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        return migratedHistory;
+      }
     }
 
     const legacyMeetingId = readLegacyMeetingId();
     if (!legacyMeetingId) return [];
 
-    const migratedHistory = [legacyMeetingId];
+    const migratedHistory = normalizeMeetingHistory([
+      {
+        meetingId: legacyMeetingId,
+        meetingTitle: null,
+        lastJoinedAt: Date.now(),
+      },
+    ]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(migratedHistory));
     localStorage.removeItem(LEGACY_STORAGE_KEY);
     return migratedHistory;
@@ -38,15 +65,36 @@ export function getMeetingHistory(): MeetingIdHistory {
   }
 }
 
-export function saveMeetingId(meetingId: MeetingId): MeetingIdHistory {
+export function saveMeetingHistoryItem(item: MeetingHistoryItem): MeetingIdHistory {
   try {
-    const result = meetingIdSchema.safeParse(meetingId);
+    const result = meetingHistoryItemSchema.safeParse(item);
     if (!result.success) return getMeetingHistory();
 
-    const nextHistory = [
+    const nextHistory = normalizeMeetingHistory([
       result.data,
-      ...getMeetingHistory().filter((item) => item !== result.data),
-    ].slice(0, MAX_HISTORY_ITEMS);
+      ...getMeetingHistory().filter((entry) => entry.meetingId !== result.data.meetingId),
+    ]);
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextHistory));
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    return nextHistory;
+  } catch {
+    return getMeetingHistory();
+  }
+}
+
+export function saveMeetingHistory(history: MeetingIdHistory): MeetingIdHistory {
+  try {
+    const result = meetingIdHistorySchema.safeParse(history);
+    if (!result.success) return getMeetingHistory();
+
+    const nextHistory = normalizeMeetingHistory(result.data);
+
+    if (nextHistory.length === 0) {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      return [];
+    }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextHistory));
     localStorage.removeItem(LEGACY_STORAGE_KEY);
@@ -61,7 +109,7 @@ export function removeMeetingId(meetingId: MeetingId): MeetingIdHistory {
     const result = meetingIdSchema.safeParse(meetingId);
     if (!result.success) return getMeetingHistory();
 
-    const nextHistory = getMeetingHistory().filter((item) => item !== result.data);
+    const nextHistory = getMeetingHistory().filter((item) => item.meetingId !== result.data);
 
     if (nextHistory.length === 0) {
       localStorage.removeItem(STORAGE_KEY);

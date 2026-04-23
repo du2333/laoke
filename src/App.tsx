@@ -3,6 +3,9 @@ import { useMeetingSession } from "@/hooks/useMeetingSession";
 import { useUser } from "@/hooks/useUser";
 import { HomePage } from "@/pages/HomePage";
 import { MeetingPage } from "@/pages/MeetingPage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient()
 
 function App() {
   const { user, loading, saveUser, updateUserName } = useUser();
@@ -18,7 +21,7 @@ function App() {
   }
 
   return (
-    <>
+    <QueryClientProvider client={queryClient}>
       {page === "meeting" && meetingSession ? (
         <MeetingPage session={meetingSession} onLeave={leaveMeeting} />
       ) : (
@@ -30,7 +33,7 @@ function App() {
         />
       )}
       <Toaster position="top-center" theme="dark" richColors />
-    </>
+    </QueryClientProvider>
   );
 }
 

@@ -11,6 +11,26 @@ interface HomePageProps {
   onJoinMeeting: (session: MeetingSession) => void;
 }
 
+function formatLastJoinedAt(timestamp: number) {
+  const diff = Date.now() - timestamp;
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diff < minute) return "刚刚加入";
+  if (diff < hour) return `${Math.floor(diff / minute)} 分钟前加入`;
+  if (diff < day) return `${Math.floor(diff / hour)} 小时前加入`;
+
+  return `${new Date(timestamp).toLocaleDateString("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+  })} ${new Date(timestamp).toLocaleTimeString("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })} 加入`;
+}
+
 export function HomePage({
   user,
   onSaveUser,
@@ -30,7 +50,6 @@ export function HomePage({
   } = useHomePage({ user, onSaveUser, onJoinMeeting });
   const renameInput = user ? userName : "";
 
-  // --- LOGIN VIEW ---
   if (!user) {
     return (
       <div className="relative min-h-screen flex items-center justify-center p-6 bg-zinc-950">
@@ -89,7 +108,6 @@ export function HomePage({
       <div className="bg-grain" />
 
       <div className="relative z-10 w-full max-w-sm space-y-8 animate-in fade-in zoom-in-95 duration-500">
-        {/* Profile / Header */}
         <div className="flex items-center justify-between border-b border-white/10 pb-6">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center border border-white/10 shadow-inner">
@@ -106,7 +124,6 @@ export function HomePage({
           </div>
         </div>
 
-        {/* Main Actions */}
         <div className="space-y-6">
           <div className="space-y-4">
             <label className="block text-xs font-medium text-zinc-400 ml-1">
@@ -145,8 +162,7 @@ export function HomePage({
               </div>
             </div>
           </div>
-          {/* Join Input ... existing code ... */}
-          {/* (Note: I'll include the join input part too to ensure space-y matches) */}
+
           <div className="space-y-4">
             <label className="block text-xs font-medium text-zinc-400 ml-1">
               加入会议
@@ -180,31 +196,50 @@ export function HomePage({
             </div>
           </div>
 
-          {/* Recent Meetings */}
           {meetingHistory.length > 0 && (
             <div className="pt-2 animate-in fade-in slide-in-from-top-2">
               <label className="block text-xs font-medium text-zinc-400 ml-1 mb-3">
                 近期会议
               </label>
               <div className="space-y-2">
-                {meetingHistory.map((historyMeetingId) => (
+                {meetingHistory.map((historyMeeting) => (
                   <div
-                    key={historyMeetingId}
+                    key={historyMeeting.meetingId}
                     className="bg-zinc-900/50 border border-white/10 rounded-xl p-3 flex items-center gap-3 group hover:border-white/20 transition-all"
                   >
                     <div
                       className="flex items-center gap-4 flex-1 cursor-pointer overflow-hidden"
-                      onClick={() => handleJoinMeeting(historyMeetingId)}
+                      onClick={() => handleJoinMeeting(historyMeeting.meetingId)}
                     >
                       <div className="shrink-0 w-9 h-9 rounded-lg bg-zinc-800/50 flex items-center justify-center text-zinc-500 group-hover:text-blue-400 transition-colors border border-white/5">
                         <History className="w-4 h-4" />
                       </div>
-                      <div className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors truncate">
-                        {historyMeetingId}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm font-medium text-zinc-200 group-hover:text-white transition-colors truncate">
+                            {historyMeeting.meetingTitle || historyMeeting.meetingId}
+                          </div>
+                          {historyMeeting.metadataLoading ? (
+                            <span className="shrink-0 flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-zinc-400 border border-white/10">
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              读取状态...
+                            </span>
+                          ) : historyMeeting.isLive ? (
+                            <span className="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300 border border-emerald-500/20">
+                              {historyMeeting.liveParticipants} 人在线
+                            </span>
+                          ) : null}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-500 truncate">
+                          {historyMeeting.meetingId}
+                        </div>
+                        <div className="mt-1 text-xs text-zinc-400 truncate">
+                          {formatLastJoinedAt(historyMeeting.lastJoinedAt)}
+                        </div>
                       </div>
                     </div>
                     <button
-                      onClick={() => handleRemoveMeeting(historyMeetingId)}
+                      onClick={() => handleRemoveMeeting(historyMeeting.meetingId)}
                       className="shrink-0 p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
                       title="清除记录"
                     >
