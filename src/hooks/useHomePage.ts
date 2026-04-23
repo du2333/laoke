@@ -1,13 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import type { MeetingSession } from "@/lib/schema/meeting";
+import type { MeetingId, MeetingSession } from "@/lib/schema/meeting";
 import type { User } from "@/lib/schema/user";
 import { api } from "@/lib/api-client";
-import {
-  clearLastMeetingId,
-  getLastMeetingId,
-  saveLastMeetingId,
-} from "@/lib/storage/meeting";
+import { getMeetingHistory, removeMeetingId, saveMeetingId } from "@/lib/storage/meeting";
 
 interface UseHomePageOptions {
   user: User | null;
@@ -19,10 +15,10 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
   const [userName, setUserName] = useState("");
   const [meetingId, setMeetingId] = useState("");
   const [loading, setLoading] = useState(false);
-  const [lastMeetingId, setLastMeetingId] = useState<string | null>(null);
+  const [meetingHistory, setMeetingHistory] = useState<MeetingId[]>([]);
 
   useEffect(() => {
-    setLastMeetingId(getLastMeetingId());
+    setMeetingHistory(getMeetingHistory());
   }, []);
 
   const handleSaveUser = useCallback(() => {
@@ -53,15 +49,13 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
         if (!res.ok) {
           const data = await res.json();
           if (targetId) {
-            clearLastMeetingId();
-            setLastMeetingId(null);
+            setMeetingHistory(removeMeetingId(targetId));
           }
           throw new Error((data as { error?: string }).error || "加入失败");
         }
 
         const data = await res.json();
-        saveLastMeetingId(id);
-        setLastMeetingId(id);
+        setMeetingHistory(saveMeetingId(id));
         toast.dismiss(toastId);
         toast.success("加入成功");
         onJoinMeeting({
@@ -78,9 +72,8 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
     [meetingId, onJoinMeeting, user],
   );
 
-  const handleClearLastMeeting = useCallback(() => {
-    clearLastMeetingId();
-    setLastMeetingId(null);
+  const handleRemoveMeeting = useCallback((meetingId: MeetingId) => {
+    setMeetingHistory(removeMeetingId(meetingId));
   }, []);
 
   return {
@@ -89,9 +82,9 @@ export function useHomePage({ user, onSaveUser, onJoinMeeting }: UseHomePageOpti
     meetingId,
     setMeetingId,
     loading,
-    lastMeetingId,
+    meetingHistory,
     handleSaveUser,
     handleJoinMeeting,
-    handleClearLastMeeting,
+    handleRemoveMeeting,
   };
 }

@@ -17,10 +17,10 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
     meetingId,
     setMeetingId,
     loading,
-    lastMeetingId,
+    meetingHistory,
     handleSaveUser,
     handleJoinMeeting,
-    handleClearLastMeeting,
+    handleRemoveMeeting,
   } = useHomePage({ user, onSaveUser, onJoinMeeting });
 
   // --- LOGIN VIEW ---
@@ -137,30 +137,37 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
           </div>
 
           {/* Recent Meetings */}
-          {lastMeetingId && (
+          {meetingHistory.length > 0 && (
             <div className="pt-2 animate-in fade-in slide-in-from-top-2">
               <label className="block text-xs font-medium text-zinc-400 ml-1 mb-3">
                 近期会议
               </label>
-              <div className="bg-zinc-900/50 border border-white/10 rounded-xl p-3 flex items-center gap-3 group hover:border-white/20 transition-all">
-                <div
-                  className="flex items-center gap-4 flex-1 cursor-pointer overflow-hidden"
-                  onClick={() => handleJoinMeeting(lastMeetingId)}
-                >
-                  <div className="shrink-0 w-9 h-9 rounded-lg bg-zinc-800/50 flex items-center justify-center text-zinc-500 group-hover:text-blue-400 transition-colors border border-white/5">
-                    <History className="w-4 h-4" />
+              <div className="space-y-2">
+                {meetingHistory.map((historyMeetingId) => (
+                  <div
+                    key={historyMeetingId}
+                    className="bg-zinc-900/50 border border-white/10 rounded-xl p-3 flex items-center gap-3 group hover:border-white/20 transition-all"
+                  >
+                    <div
+                      className="flex items-center gap-4 flex-1 cursor-pointer overflow-hidden"
+                      onClick={() => handleJoinMeeting(historyMeetingId)}
+                    >
+                      <div className="shrink-0 w-9 h-9 rounded-lg bg-zinc-800/50 flex items-center justify-center text-zinc-500 group-hover:text-blue-400 transition-colors border border-white/5">
+                        <History className="w-4 h-4" />
+                      </div>
+                      <div className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors truncate">
+                        {historyMeetingId}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveMeeting(historyMeetingId)}
+                      className="shrink-0 p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
+                      title="清除记录"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <div className="text-sm font-medium text-zinc-300 group-hover:text-white transition-colors truncate">
-                    {lastMeetingId}
-                  </div>
-                </div>
-                <button
-                  onClick={handleClearLastMeeting}
-                  className="shrink-0 p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
-                  title="清除记录"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                ))}
               </div>
             </div>
           )}
