@@ -1,4 +1,4 @@
-import { ArrowRight, History, Terminal, Hash, Loader2, X } from "lucide-react";
+import { ArrowRight, History, PencilLine, Terminal, Hash, Loader2, X } from "lucide-react";
 import type { MeetingSession } from "@/lib/schema/meeting";
 import type { User } from "@/lib/schema/user";
 import { useHomePage } from "@/hooks/useHomePage";
@@ -7,10 +7,16 @@ import { cn } from "@/lib/utils";
 interface HomePageProps {
   user: User | null;
   onSaveUser: (name: string) => User;
+  onUpdateUserName: (name: string) => User | null;
   onJoinMeeting: (session: MeetingSession) => void;
 }
 
-export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
+export function HomePage({
+  user,
+  onSaveUser,
+  onUpdateUserName,
+  onJoinMeeting,
+}: HomePageProps) {
   const {
     userName,
     setUserName,
@@ -22,6 +28,7 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
     handleJoinMeeting,
     handleRemoveMeeting,
   } = useHomePage({ user, onSaveUser, onJoinMeeting });
+  const renameInput = user ? userName : "";
 
   // --- LOGIN VIEW ---
   if (!user) {
@@ -101,6 +108,43 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
 
         {/* Main Actions */}
         <div className="space-y-6">
+          <div className="space-y-4">
+            <label className="block text-xs font-medium text-zinc-400 ml-1">
+              修改用户名
+            </label>
+            <div className="relative group">
+              <div className="absolute top-1/2 -translate-y-1/2 left-4 text-zinc-500 group-focus-within:text-blue-500 transition-colors">
+                <PencilLine className="w-4 h-4" />
+              </div>
+              <input
+                type="text"
+                value={renameInput}
+                onChange={(e) => setUserName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && userName.trim()) {
+                    onUpdateUserName(userName.trim());
+                    setUserName("");
+                  }
+                }}
+                placeholder={user.name}
+                className="w-full bg-zinc-900/80 border border-white/10 rounded-xl py-4 pl-11 pr-12 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-base"
+                maxLength={15}
+              />
+              <div className="absolute top-1/2 -translate-y-1/2 right-2">
+                <button
+                  onClick={() => {
+                    if (!userName.trim()) return;
+                    onUpdateUserName(userName.trim());
+                    setUserName("");
+                  }}
+                  disabled={!userName.trim()}
+                  className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white disabled:opacity-0 disabled:pointer-events-none transition-all duration-300"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
           {/* Join Input ... existing code ... */}
           {/* (Note: I'll include the join input part too to ensure space-y matches) */}
           <div className="space-y-4">

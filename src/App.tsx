@@ -5,7 +5,7 @@ import { HomePage } from "@/pages/HomePage";
 import { MeetingPage } from "@/pages/MeetingPage";
 
 function App() {
-  const { user, loading, saveUser } = useUser();
+  const { user, loading, saveUser, updateUserName } = useUser();
   const { page, meetingSession, joinMeeting, leaveMeeting } = useMeetingSession();
 
   // Show loading while checking localStorage
@@ -22,7 +22,12 @@ function App() {
       {page === "meeting" && meetingSession ? (
         <MeetingPage session={meetingSession} onLeave={leaveMeeting} />
       ) : (
-        <HomePage user={user} onSaveUser={saveUser} onJoinMeeting={joinMeeting} />
+        <HomePage
+          user={user}
+          onSaveUser={saveUser}
+          onUpdateUserName={updateUserName}
+          onJoinMeeting={joinMeeting}
+        />
       )}
       <Toaster position="top-center" theme="dark" richColors />
     </>
