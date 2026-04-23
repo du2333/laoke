@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { userNameSchema, userSchema, type User } from "../schema/user";
+import { userNameSchema, userSchema, type User } from "@/lib/schema/user";
 
 const STORAGE_KEY = "laoke_user";
 

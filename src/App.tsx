@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
 import { Toaster } from "sonner";
-import type { AppPage } from "./lib/schema/app";
-import type { MeetingSession } from "./lib/schema/meeting";
-import { useUser } from "./hooks/useUser";
-import { HomePage } from "./pages/HomePage";
-import { MeetingPage } from "./pages/MeetingPage";
+import type { AppPage } from "@/lib/schema/app";
+import type { MeetingSession } from "@/lib/schema/meeting";
+import { useUser } from "@/hooks/useUser";
+import { HomePage } from "@/pages/HomePage";
+import { MeetingPage } from "@/pages/MeetingPage";
 
 function App() {
   const { user, loading, saveUser } = useUser();

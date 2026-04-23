@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { ArrowRight, History, Terminal, Hash, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
-import type { MeetingSession } from "../lib/schema/meeting";
-import type { User } from "../lib/schema/user";
-import { api } from "../lib/api-client";
+import type { MeetingSession } from "@/lib/schema/meeting";
+import type { User } from "@/lib/schema/user";
+import { api } from "@/lib/api-client";
 import {
   getLastMeetingId,
   saveLastMeetingId,
   clearLastMeetingId,
-} from "../lib/storage/meeting";
-import { cn } from "../lib/utils";
+} from "@/lib/storage/meeting";
+import { cn } from "@/lib/utils";
 
 interface HomePageProps {
   user: User | null;

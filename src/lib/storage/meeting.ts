@@ -1,4 +1,4 @@
-import { meetingIdSchema, type MeetingId } from "../schema/meeting";
+import { meetingIdSchema, type MeetingId } from "@/lib/schema/meeting";
 
 const STORAGE_KEY = "laoke_last_meeting";
 

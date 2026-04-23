@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import type { User } from "../lib/schema/user";
-import { getUser, saveUser as saveUserToStorage } from "../lib/storage/user";
+import type { User } from "@/lib/schema/user";
+import { getUser, saveUser as saveUserToStorage } from "@/lib/storage/user";
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
