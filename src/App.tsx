@@ -1,27 +1,12 @@
-import { useState, useCallback } from "react";
 import { Toaster } from "sonner";
-import type { AppPage } from "@/lib/schema/app";
-import type { MeetingSession } from "@/lib/schema/meeting";
+import { useMeetingSession } from "@/hooks/useMeetingSession";
 import { useUser } from "@/hooks/useUser";
 import { HomePage } from "@/pages/HomePage";
 import { MeetingPage } from "@/pages/MeetingPage";
 
 function App() {
   const { user, loading, saveUser } = useUser();
-  const [page, setPage] = useState<AppPage>("home");
-  const [meetingSession, setMeetingSession] = useState<MeetingSession | null>(
-    null,
-  );
-
-  const handleJoinMeeting = useCallback((session: MeetingSession) => {
-    setMeetingSession(session);
-    setPage("meeting");
-  }, []);
-
-  const handleLeaveMeeting = useCallback(() => {
-    setMeetingSession(null);
-    setPage("home");
-  }, []);
+  const { page, meetingSession, joinMeeting, leaveMeeting } = useMeetingSession();
 
   // Show loading while checking localStorage
   if (loading) {
@@ -35,13 +20,9 @@ function App() {
   return (
     <>
       {page === "meeting" && meetingSession ? (
-        <MeetingPage session={meetingSession} onLeave={handleLeaveMeeting} />
+        <MeetingPage session={meetingSession} onLeave={leaveMeeting} />
       ) : (
-        <HomePage
-          user={user}
-          onSaveUser={saveUser}
-          onJoinMeeting={handleJoinMeeting}
-        />
+        <HomePage user={user} onSaveUser={saveUser} onJoinMeeting={joinMeeting} />
       )}
       <Toaster position="top-center" theme="dark" richColors />
     </>
