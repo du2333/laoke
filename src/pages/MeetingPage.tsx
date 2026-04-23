@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { useRealtimeKitClient } from "@cloudflare/realtimekit-react";
 import { RtkMeeting } from "@cloudflare/realtimekit-react-ui";
 import { Wifi } from "lucide-react";
+import { useMeetingPage } from "@/hooks/useMeetingPage";
 import type { MeetingSession } from "@/lib/schema/meeting";
 import { cn } from "@/lib/utils";
 
@@ -11,34 +10,7 @@ interface MeetingPageProps {
 }
 
 export function MeetingPage({ session, onLeave }: MeetingPageProps) {
-  const [meeting, initMeeting] = useRealtimeKitClient();
-  const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    initMeeting({
-      authToken: session.authToken,
-      defaults: {
-        audio: true,
-        video: false,
-      },
-    }).catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : "连接失败");
-    });
-  }, [session.authToken, initMeeting]);
-
-  // Handle meeting end
-  useEffect(() => {
-    if (!meeting) return;
-    const handleLeft = () => {
-      onLeave();
-    };
-    meeting.self.on("roomLeft", handleLeft);
-    return () => {
-      meeting.self.off("roomLeft", handleLeft);
-    };
-  }, [meeting, onLeave]);
+  const { meeting, error, mounted } = useMeetingPage({ session, onLeave });
 
   // --- ERROR STATE ---
   if (error) {

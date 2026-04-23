@@ -1,14 +1,7 @@
-import { useState, useEffect } from "react";
 import { ArrowRight, History, Terminal, Hash, Loader2, X } from "lucide-react";
-import { toast } from "sonner";
 import type { MeetingSession } from "@/lib/schema/meeting";
 import type { User } from "@/lib/schema/user";
-import { api } from "@/lib/api-client";
-import {
-  getLastMeetingId,
-  saveLastMeetingId,
-  clearLastMeetingId,
-} from "@/lib/storage/meeting";
+import { useHomePage } from "@/hooks/useHomePage";
 import { cn } from "@/lib/utils";
 
 interface HomePageProps {
@@ -18,14 +11,17 @@ interface HomePageProps {
 }
 
 export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
-  const [userName, setUserName] = useState("");
-  const [meetingId, setMeetingId] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [lastMeetingId, setLastMeetingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLastMeetingId(getLastMeetingId());
-  }, []);
+  const {
+    userName,
+    setUserName,
+    meetingId,
+    setMeetingId,
+    loading,
+    lastMeetingId,
+    handleSaveUser,
+    handleJoinMeeting,
+    handleClearLastMeeting,
+  } = useHomePage({ user, onSaveUser, onJoinMeeting });
 
   // --- LOGIN VIEW ---
   if (!user) {
@@ -50,7 +46,7 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
               onChange={(e) => setUserName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && userName.trim()) {
-                  onSaveUser(userName.trim());
+                  handleSaveUser();
                 }
               }}
               placeholder="给自己起个名字"
@@ -69,7 +65,7 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
             )}
           >
             <button
-              onClick={() => userName.trim() && onSaveUser(userName.trim())}
+              onClick={handleSaveUser}
               className="group flex items-center gap-2 text-zinc-500 hover:text-white transition-colors text-xs uppercase tracking-widest"
             >
               <span>开始</span>
@@ -80,48 +76,6 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
       </div>
     );
   }
-
-  // --- DASHBOARD VIEW ---
-  const handleJoinMeeting = async (targetId?: string) => {
-    const id = targetId || meetingId.trim();
-    if (!id) return;
-
-    setLoading(true);
-    const toastId = toast.loading("正在加入频道...");
-
-    try {
-      const res = await api.api.join.$post({
-        json: {
-          meetingId: id,
-          userId: user.id,
-          userName: user.name,
-        },
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        if (targetId) {
-          clearLastMeetingId();
-          setLastMeetingId(null);
-        }
-        throw new Error((data as { error?: string }).error || "加入失败");
-      }
-
-      const data = await res.json();
-      saveLastMeetingId(id);
-      toast.dismiss(toastId);
-      toast.success("加入成功");
-      onJoinMeeting({
-        meetingId: id,
-        authToken: data.authToken,
-      });
-    } catch (err) {
-      toast.dismiss(toastId);
-      toast.error(err instanceof Error ? err.message : "加入失败");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-6 bg-zinc-950">
@@ -201,7 +155,7 @@ export function HomePage({ user, onSaveUser, onJoinMeeting }: HomePageProps) {
                   </div>
                 </div>
                 <button
-                  onClick={clearLastMeetingId}
+                  onClick={handleClearLastMeeting}
                   className="shrink-0 p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/5"
                   title="清除记录"
                 >
