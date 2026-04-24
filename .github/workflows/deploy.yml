@@ -55,7 +55,8 @@ jobs:
           {
             "CLOUDFLARE_ACCOUNT_ID": "$CLOUDFLARE_ACCOUNT_ID",
             "REALTIME_APP_ID": "$REALTIME_APP_ID",
-            "REALTIME_API_TOKEN": "$REALTIME_API_TOKEN"
+            "REALTIME_API_TOKEN": "$REALTIME_API_TOKEN",
+            "ADMIN_TOKEN": "$ADMIN_TOKEN"
           }
           EOF
 
