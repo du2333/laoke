@@ -31,7 +31,7 @@ export function useAdminMeetings() {
       });
       return {
         meetings: data.meetings.filter((meeting) => meeting.status === "ACTIVE"),
-        nextPageNo: data.nextPageNo
+        nextPageNo: data.nextPageNo,
       };
     },
     initialPageParam: 1,

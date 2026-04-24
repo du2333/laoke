@@ -1,6 +1,7 @@
-import { Check, Edit2, User as UserIcon, X } from "lucide-react";
+import { Check, Edit2, Shield, User as UserIcon, X } from "lucide-react";
 
 import type { User } from "@/features/user/client/schema";
+import { cn } from "@/lib/utils";
 
 type UserProfileProps = {
   user: User;
@@ -9,6 +10,8 @@ type UserProfileProps = {
   setRenameValue: (value: string) => void;
   setIsEditingName: (value: boolean) => void;
   onUpdateUserName: (name: string) => User | null;
+  isAdminPanelVisible?: boolean;
+  onToggleAdminPanel?: () => void;
 };
 
 export function UserProfile({
@@ -18,6 +21,8 @@ export function UserProfile({
   setRenameValue,
   setIsEditingName,
   onUpdateUserName,
+  isAdminPanelVisible,
+  onToggleAdminPanel,
 }: UserProfileProps) {
   function saveRename() {
     if (!renameValue.trim()) return;
@@ -81,13 +86,29 @@ export function UserProfile({
               </div>
             </div>
           </div>
-          <button
-            onClick={() => setIsEditingName(true)}
-            className="p-3 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all opacity-0 group-hover/profile:opacity-100 focus:opacity-100"
-            title="修改名字"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover/profile:opacity-100 transition-all">
+            <button
+              onClick={() => setIsEditingName(true)}
+              className="p-3 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all focus:opacity-100 active:scale-95"
+              title="修改名字"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+            {onToggleAdminPanel && (
+              <button
+                onClick={onToggleAdminPanel}
+                className={cn(
+                  "p-3 rounded-xl transition-all focus:opacity-100 active:scale-95",
+                  isAdminPanelVisible
+                    ? "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30"
+                    : "bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10",
+                )}
+                title="管理员面板"
+              >
+                <Shield className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

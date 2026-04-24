@@ -20,6 +20,7 @@ export function HomePage() {
   const [meetingId, setMeetingId] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const meetingHistory = useMeetingHistory();
   const adminMeetings = useAdminMeetings();
   const joinMeeting = useJoinMeeting({
@@ -59,56 +60,73 @@ export function HomePage() {
         {!user ? (
           <Onboarding userName={userName} setUserName={setUserName} onSaveUser={handleSaveUser} />
         ) : (
-          <div
-            key="main-content"
-            className="grid gap-6 lg:grid-cols-[minmax(320px,380px)_1fr] animate-in fade-in slide-in-from-bottom-12 duration-1000 ease-out"
-          >
-            <div className="space-y-6">
-              <UserProfile
-                user={user}
-                isEditingName={isEditingName}
-                renameValue={renameValue}
-                setRenameValue={setRenameValue}
-                setIsEditingName={setIsEditingName}
-                onUpdateUserName={updateUserName}
-              />
-
+          <>
+            <div
+              key="main-content"
+              className="max-w-md mx-auto animate-in fade-in slide-in-from-bottom-12 duration-1000 ease-out"
+            >
               <div className="space-y-6">
-                <JoinMeetingPanel
-                  meetingId={meetingId}
-                  setMeetingId={setMeetingId}
-                  loading={joinMeeting.joiningMeeting}
-                  onJoinMeeting={joinMeeting.handleJoinMeeting}
+                <UserProfile
+                  user={user}
+                  isEditingName={isEditingName}
+                  renameValue={renameValue}
+                  setRenameValue={setRenameValue}
+                  setIsEditingName={setIsEditingName}
+                  onUpdateUserName={updateUserName}
+                  isAdminPanelVisible={showAdminPanel}
+                  onToggleAdminPanel={() => setShowAdminPanel(!showAdminPanel)}
                 />
-                <RecentMeetings
-                  meetings={meetingHistory.meetingHistory}
-                  onJoinMeeting={joinMeeting.handleJoinMeeting}
-                  onRemoveMeeting={meetingHistory.removeMeeting}
-                />
+
+                <div className="space-y-6">
+                  <JoinMeetingPanel
+                    meetingId={meetingId}
+                    setMeetingId={setMeetingId}
+                    loading={joinMeeting.joiningMeeting}
+                    onJoinMeeting={joinMeeting.handleJoinMeeting}
+                  />
+                  <RecentMeetings
+                    meetings={meetingHistory.meetingHistory}
+                    onJoinMeeting={joinMeeting.handleJoinMeeting}
+                    onRemoveMeeting={meetingHistory.removeMeeting}
+                  />
+                </div>
               </div>
             </div>
 
-            <AdminMeetingsPanel
-              adminToken={adminMeetings.adminToken}
-              adminTokenInput={adminMeetings.adminTokenInput}
-              setAdminTokenInput={adminMeetings.setAdminTokenInput}
-              newMeetingTitle={adminMeetings.newMeetingTitle}
-              setNewMeetingTitle={adminMeetings.setNewMeetingTitle}
-              adminMeetings={adminMeetings.adminMeetings}
-              adminMeetingsLoading={adminMeetings.adminMeetingsLoading}
-              adminMeetingsError={adminMeetings.adminMeetingsError}
-              adminMeetingsHasMore={adminMeetings.adminMeetingsHasMore}
-              adminMeetingsLoadingMore={adminMeetings.adminMeetingsLoadingMore}
-              creatingMeeting={adminMeetings.creatingMeeting}
-              deactivatingMeetingId={adminMeetings.deactivatingMeetingId}
-              onSaveAdminToken={adminMeetings.handleSaveAdminToken}
-              onClearAdminToken={adminMeetings.handleClearAdminToken}
-              onCreateMeeting={adminMeetings.handleCreateMeeting}
-              onDeactivateMeeting={adminMeetings.handleDeactivateMeeting}
-              onLoadMoreMeetings={adminMeetings.handleLoadMoreMeetings}
-              onJoinMeeting={joinMeeting.handleJoinMeeting}
-            />
-          </div>
+            {showAdminPanel && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                <div
+                  className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+                  onClick={() => setShowAdminPanel(false)}
+                />
+                <div className="relative z-10 w-full max-w-lg animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                  <AdminMeetingsPanel
+                    adminToken={adminMeetings.adminToken}
+                    adminTokenInput={adminMeetings.adminTokenInput}
+                    setAdminTokenInput={adminMeetings.setAdminTokenInput}
+                    newMeetingTitle={adminMeetings.newMeetingTitle}
+                    setNewMeetingTitle={adminMeetings.setNewMeetingTitle}
+                    adminMeetings={adminMeetings.adminMeetings}
+                    adminMeetingsLoading={adminMeetings.adminMeetingsLoading}
+                    adminMeetingsError={adminMeetings.adminMeetingsError}
+                    adminMeetingsHasMore={adminMeetings.adminMeetingsHasMore}
+                    adminMeetingsLoadingMore={adminMeetings.adminMeetingsLoadingMore}
+                    creatingMeeting={adminMeetings.creatingMeeting}
+                    deactivatingMeetingId={adminMeetings.deactivatingMeetingId}
+                    onSaveAdminToken={adminMeetings.handleSaveAdminToken}
+                    onClearAdminToken={() => {
+                      adminMeetings.handleClearAdminToken();
+                    }}
+                    onCreateMeeting={adminMeetings.handleCreateMeeting}
+                    onDeactivateMeeting={adminMeetings.handleDeactivateMeeting}
+                    onLoadMoreMeetings={adminMeetings.handleLoadMoreMeetings}
+                    onJoinMeeting={joinMeeting.handleJoinMeeting}
+                    onClose={() => setShowAdminPanel(false)}
+                  />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
