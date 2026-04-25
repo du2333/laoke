@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MeetingMeetingIdRouteImport } from './routes/meeting.$meetingId'
+import { Route as ApiSplatRouteImport } from './routes/api.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const MeetingMeetingIdRoute = MeetingMeetingIdRouteImport.update({
   path: '/meeting/$meetingId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/$': typeof ApiSplatRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/$': typeof ApiSplatRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/$': typeof ApiSplatRoute
   '/meeting/$meetingId': typeof MeetingMeetingIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/meeting/$meetingId'
+  fullPaths: '/' | '/api/$' | '/meeting/$meetingId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/meeting/$meetingId'
-  id: '__root__' | '/' | '/meeting/$meetingId'
+  to: '/' | '/api/$' | '/meeting/$meetingId'
+  id: '__root__' | '/' | '/api/$' | '/meeting/$meetingId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiSplatRoute: typeof ApiSplatRoute
   MeetingMeetingIdRoute: typeof MeetingMeetingIdRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetingMeetingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiSplatRoute: ApiSplatRoute,
   MeetingMeetingIdRoute: MeetingMeetingIdRoute,
 }
 export const routeTree = rootRouteImport

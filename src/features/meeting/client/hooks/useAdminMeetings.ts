@@ -3,11 +3,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import type { MeetingId } from "@/features/meeting/schema";
-import {
-  createMeetingFn,
-  deactivateMeetingFn,
-  listMeetingsFn,
-} from "@/features/meeting/server/function";
+import { deactivateMeetingFn, listMeetingsFn } from "@/features/meeting/server/function";
+import { orpc } from "@/lib/orpc";
+import { handleORPCError } from "@/lib/orpc/error-handler";
 
 const ADMIN_TOKEN_STORAGE_KEY = "laoke-admin-token";
 const ADMIN_MEETINGS_QUERY_KEY = ["admin-meetings"] as const;
@@ -40,15 +38,27 @@ export function useAdminMeetings() {
     staleTime: 15_000,
   });
 
-  const createMeetingMutation = useMutation({
-    mutationFn: async (title: string) => {
-      return createMeetingFn({ data: { title, adminToken } });
-    },
-    onSuccess: async () => {
-      setNewMeetingTitle("");
-      await queryClient.invalidateQueries({ queryKey: ADMIN_MEETINGS_QUERY_KEY });
-    },
-  });
+  const createMeetingMutation = useMutation(
+    orpc.meeting.createMeeting.mutationOptions({
+      onSuccess: async () => {
+        setNewMeetingTitle("");
+        await queryClient.invalidateQueries({ queryKey: ADMIN_MEETINGS_QUERY_KEY });
+      },
+      onError: (error) => {
+        handleORPCError(error, {
+          defined: {
+            UNAUTHORIZED: () => {
+              toast.error("无效的管理员令牌，请重新输入");
+              handleClearAdminToken();
+            },
+          },
+          fallback: (error) => {
+            toast.error(error instanceof Error ? error.message : "创建会议失败");
+          },
+        });
+      },
+    }),
+  );
 
   const deactivateMeetingMutation = useMutation({
     mutationFn: async (targetMeetingId: MeetingId) => {
@@ -83,12 +93,7 @@ export function useAdminMeetings() {
     const title = newMeetingTitle.trim();
     if (!title) return;
 
-    try {
-      await createMeetingMutation.mutateAsync(title);
-      toast.success("会议已创建");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "创建会议失败");
-    }
+    createMeetingMutation.mutate({ title, adminToken });
   }
 
   async function handleDeactivateMeeting(targetMeetingId: MeetingId) {

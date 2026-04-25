@@ -1,8 +1,9 @@
 import { createMiddleware } from "@tanstack/react-start";
 
-import { adminTokenInputSchema } from "@/features/auth/schema";
+import { adminTokenInputSchema, type AdminTokenInput } from "@/features/auth/schema";
 
-import { verifyAdmin } from "./auth";
+import { isAdmin, verifyAdmin } from "./auth";
+import { admin } from "./procedure";
 
 export const adminMiddleware = createMiddleware({ type: "function" })
   .inputValidator(adminTokenInputSchema)
@@ -10,3 +11,12 @@ export const adminMiddleware = createMiddleware({ type: "function" })
     verifyAdmin(context.env, data.adminToken);
     return next();
   });
+
+export const requireAdmin = admin.middleware(
+  async ({ context, next, errors }, input: AdminTokenInput) => {
+    if (!isAdmin(context.env, input.adminToken)) {
+      throw errors.UNAUTHORIZED();
+    }
+    return await next();
+  },
+);

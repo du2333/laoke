@@ -7,3 +7,8 @@ export function verifyAdmin(env: Env, adminToken: string) {
     throw new Error("管理密码不正确");
   }
 }
+
+export function isAdmin(env: Env, adminToken: string) {
+  const { ADMIN_TOKEN } = getServerEnv(env);
+  return adminToken === ADMIN_TOKEN;
+}
