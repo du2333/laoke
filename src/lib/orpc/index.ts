@@ -1,11 +1,14 @@
 import { createORPCClient } from "@orpc/client";
-import { RPCLink } from "@orpc/client/fetch";
-import type { RouterClient } from "@orpc/server";
+import type { ContractRouterClient } from "@orpc/contract";
+import { ResponseValidationPlugin } from "@orpc/contract/plugins";
+import { OpenAPILink } from "@orpc/openapi-client/fetch";
 import { createRouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { createIsomorphicFn, getGlobalStartContext } from "@tanstack/react-start";
 
 import { router } from "./router";
+
+type AppORPCClient = ContractRouterClient<typeof router>;
 
 const getORPCClient = createIsomorphicFn()
   .server(() =>
@@ -21,14 +24,15 @@ const getORPCClient = createIsomorphicFn()
       },
     }),
   )
-  .client((): RouterClient<typeof router> => {
-    const link = new RPCLink({
+  .client((): AppORPCClient => {
+    const link = new OpenAPILink(router, {
       url: `${window.location.origin}/api`,
+      plugins: [new ResponseValidationPlugin(router)],
     });
 
     return createORPCClient(link);
   });
 
-export const client: RouterClient<typeof router> = getORPCClient();
+export const client: AppORPCClient = getORPCClient();
 
 export const orpc = createTanstackQueryUtils(client);

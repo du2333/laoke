@@ -18,10 +18,10 @@ export function formatLastJoinedAt(timestamp: number) {
   })} 加入`;
 }
 
-export function formatCreatedAt(value: string | null) {
+export function formatCreatedAt(value: Date | null) {
   if (!value) return "创建时间未知";
 
-  return new Date(value).toLocaleDateString("zh-CN", {
+  return value.toLocaleDateString("zh-CN", {
     month: "numeric",
     day: "numeric",
     hour: "2-digit",

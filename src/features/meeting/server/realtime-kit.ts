@@ -70,7 +70,7 @@ function mapMeeting(meeting: {
     meetingId: meeting.id,
     meetingTitle: meeting.title ?? null,
     status: meeting.status ?? null,
-    createdAt: meeting.created_at ?? null,
+    createdAt: meeting.created_at ? new Date(meeting.created_at) : null,
   };
 }
 

@@ -26,26 +26,26 @@ export const listMeetingsInputSchema = z.object({
   perPage: z.number().int().positive().max(100).optional(),
 });
 
-export const managedMeetingSchema = z.object({
+export const managedMeetingOutputSchema = z.object({
   meetingId: meetingIdSchema,
   meetingTitle: z.string().nullable(),
   status: z.string().nullable(),
-  createdAt: z.string().nullable(),
+  createdAt: z.coerce.date().nullable(),
 });
 
-export const meetingSessionSchema = z.object({
+export const meetingSessionOutputSchema = z.object({
   meetingId: meetingIdSchema,
   authToken: z.string().min(1),
 });
 
-export const meetingMetadataSchema = z.object({
+export const meetingMetadataOutputSchema = z.object({
   meetingId: meetingIdSchema,
   meetingTitle: z.string().nullable(),
   liveParticipants: z.number().int().nonnegative(),
 });
 
-export const managedMeetingListSchema = z.object({
-  meetings: z.array(managedMeetingSchema),
+export const managedMeetingListOutputSchema = z.object({
+  meetings: z.array(managedMeetingOutputSchema),
   nextPageNo: z.number().int().nonnegative().nullable(),
 });
 
@@ -55,7 +55,7 @@ export type JoinMeetingInput = z.infer<typeof joinMeetingInputSchema>;
 export type GetMeetingMetadataInput = z.infer<typeof getMeetingMetadataInputSchema>;
 export type DeactivateMeetingInput = z.infer<typeof deactivateMeetingInputSchema>;
 export type ListMeetingsInput = z.infer<typeof listMeetingsInputSchema>;
-export type ManagedMeeting = z.infer<typeof managedMeetingSchema>;
-export type MeetingSession = z.infer<typeof meetingSessionSchema>;
-export type MeetingMetadata = z.infer<typeof meetingMetadataSchema>;
-export type ManagedMeetingList = z.infer<typeof managedMeetingListSchema>;
+export type ManagedMeeting = z.infer<typeof managedMeetingOutputSchema>;
+export type MeetingSession = z.infer<typeof meetingSessionOutputSchema>;
+export type MeetingMetadata = z.infer<typeof meetingMetadataOutputSchema>;
+export type ManagedMeetingList = z.infer<typeof managedMeetingListOutputSchema>;

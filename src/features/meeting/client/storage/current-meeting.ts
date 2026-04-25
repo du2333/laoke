@@ -1,6 +1,6 @@
 import { createClientOnlyFn } from "@tanstack/react-start";
 
-import { meetingSessionSchema, type MeetingSession } from "@/features/meeting/schema";
+import { meetingSessionOutputSchema, type MeetingSession } from "@/features/meeting/schema";
 
 const STORAGE_KEY = "laoke_current_meeting_session";
 
@@ -9,7 +9,7 @@ export const getCurrentMeetingSession = createClientOnlyFn((): MeetingSession | 
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (!stored) return null;
 
-    const result = meetingSessionSchema.safeParse(JSON.parse(stored));
+    const result = meetingSessionOutputSchema.safeParse(JSON.parse(stored));
     return result.success ? result.data : null;
   } catch {
     return null;
@@ -17,7 +17,7 @@ export const getCurrentMeetingSession = createClientOnlyFn((): MeetingSession | 
 });
 
 export const saveCurrentMeetingSession = createClientOnlyFn((session: MeetingSession) => {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(meetingSessionSchema.parse(session)));
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(meetingSessionOutputSchema.parse(session)));
 });
 
 export const clearCurrentMeetingSession = createClientOnlyFn(() => {
