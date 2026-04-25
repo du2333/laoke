@@ -35,7 +35,6 @@ export const createMeeting = admin
     path: "/admin/meetings",
     summary: "Create meeting",
     tags: ["Admin", "Meetings"],
-    spec: (current) => ({ ...current, security: [{ bearerAuth: [] }] }),
   })
   .input(createMeetingInputSchema)
   .output(managedMeetingOutputSchema)
@@ -50,7 +49,6 @@ export const listMeetings = admin
     path: "/admin/meetings",
     summary: "List meetings",
     tags: ["Admin", "Meetings"],
-    spec: (current) => ({ ...current, security: [{ bearerAuth: [] }] }),
   })
   .input(listMeetingsInputSchema)
   .output(managedMeetingListOutputSchema)
@@ -63,7 +61,6 @@ export const deactivateMeeting = admin
     path: "/admin/meetings/{meetingId}/deactivate",
     summary: "Deactivate meeting",
     tags: ["Admin", "Meetings"],
-    spec: (current) => ({ ...current, security: [{ bearerAuth: [] }] }),
   })
   .input(deactivateMeetingInputSchema)
   .output(managedMeetingOutputSchema)

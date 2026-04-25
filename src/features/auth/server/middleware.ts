@@ -1,3 +1,5 @@
+import { oo } from "@orpc/openapi";
+
 import { isAdmin } from "./auth";
 import { admin } from "./procedure";
 
@@ -11,15 +13,18 @@ function getAdminToken(headers: Headers) {
   return token?.trim() || null;
 }
 
-export const requireAdmin = admin.middleware(async ({ context, next, errors }) => {
-  const adminToken = getAdminToken(context.headers);
+export const requireAdmin = oo.spec(
+  admin.middleware(async ({ context, next, errors }) => {
+    const adminToken = getAdminToken(context.headers);
 
-  if (!adminToken || !isAdmin(context.env, adminToken)) {
-    throw errors.UNAUTHORIZED();
-  }
+    if (!adminToken || !isAdmin(context.env, adminToken)) {
+      throw errors.UNAUTHORIZED();
+    }
 
-  return await next();
-});
+    return await next();
+  }),
+  { security: [{ bearerAuth: [] }] },
+);
 
 export const resolveAdmin = admin.middleware(async ({ context, next, errors }) => {
   const adminToken = getAdminToken(context.headers);
