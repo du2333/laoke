@@ -1,4 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
+import { useRef } from "react";
 import { toast } from "sonner";
 
 import type { JoinedMeetingHistoryItem } from "@/features/meeting/client/hooks/useMeetingHistory";
@@ -24,7 +25,37 @@ export function useJoinMeeting({
   onMeetingJoined,
   onTargetJoinFailed,
 }: UseJoinMeetingOptions) {
-  const joinMeetingMutation = useMutation(orpc.meeting.joinMeeting.mutationOptions());
+  const targetJoinRef = useRef<string | undefined>(undefined);
+  const joinMeetingMutation = useMutation(
+    orpc.meeting.joinMeeting.mutationOptions({
+      onSuccess: (result, input) => {
+        targetJoinRef.current = undefined;
+        onMeetingJoined({
+          meetingId: input.meetingId,
+          lastJoinedAt: Date.now(),
+        });
+        onJoinMeeting({
+          meetingId: input.meetingId,
+          authToken: result.authToken,
+        });
+      },
+      onError: (error) => {
+        if (targetJoinRef.current) {
+          onTargetJoinFailed(targetJoinRef.current);
+        }
+        targetJoinRef.current = undefined;
+        handleORPCError(error, {
+          defined: {
+            UNAUTHORIZED: () => {},
+          },
+          fallback: (error) => {
+            console.error("Join meeting error:", error);
+            toast.error("加入会议失败，请稍后再试");
+          },
+        });
+      },
+    }),
+  );
 
   function handleJoinMeeting(targetId?: string) {
     if (!user) return;
@@ -32,46 +63,13 @@ export function useJoinMeeting({
     const id = targetId || meetingId.trim();
     if (!id) return;
 
-    const toastId = toast.loading("正在加入频道...");
-
-    joinMeetingMutation.mutate(
-      {
-        meetingId: id,
-        userId: user.id,
-        userName: user.name,
-        adminToken: adminToken || undefined,
-      },
-      {
-        onSuccess: (result) => {
-          onMeetingJoined({
-            meetingId: id,
-            lastJoinedAt: Date.now(),
-          });
-          toast.dismiss(toastId);
-          toast.success("加入成功");
-          onJoinMeeting({
-            meetingId: id,
-            authToken: result.authToken,
-          });
-        },
-        onError: (error) => {
-          if (targetId) {
-            onTargetJoinFailed(targetId);
-          }
-          toast.dismiss(toastId);
-          handleORPCError(error, {
-            defined: {
-              UNAUTHORIZED: () => {
-                toast.error("无效的管理员令牌，请重新输入");
-              },
-            },
-            fallback: (error) => {
-              toast.error(error instanceof Error ? error.message : "加入失败");
-            },
-          });
-        },
-      },
-    );
+    targetJoinRef.current = targetId;
+    joinMeetingMutation.mutate({
+      meetingId: id,
+      userId: user.id,
+      userName: user.name,
+      adminToken: adminToken || undefined,
+    });
   }
 
   return {
