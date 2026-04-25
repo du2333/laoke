@@ -8,7 +8,7 @@ import {
   type MeetingHistoryItem,
 } from "@/features/meeting/client/storage/meeting-history";
 import type { MeetingId } from "@/features/meeting/schema";
-import { getMeetingMetadataFn } from "@/features/meeting/server/function";
+import { orpc } from "@/lib/orpc";
 
 type RecentMeeting = MeetingHistoryItem & {
   meetingTitle: string | null;
@@ -18,16 +18,15 @@ type RecentMeeting = MeetingHistoryItem & {
 
 export type JoinedMeetingHistoryItem = MeetingHistoryItem;
 
-const meetingMetadataQueryKey = (meetingId: MeetingId) => ["meeting-metadata", meetingId];
-
 export function useMeetingHistory() {
   const queryClient = useQueryClient();
   const [meetingHistory, setMeetingHistory] = useState<MeetingHistoryItem[]>(getMeetingHistory);
 
   const metadataQueries = useQueries({
     queries: meetingHistory.map((item) => ({
-      queryKey: meetingMetadataQueryKey(item.meetingId),
-      queryFn: () => getMeetingMetadataFn({ data: { meetingId: item.meetingId } }),
+      ...orpc.meeting.getMeetingMetadata.queryOptions({
+        input: { meetingId: item.meetingId },
+      }),
       staleTime: 30_000,
     })),
   });
@@ -50,7 +49,11 @@ export function useMeetingHistory() {
 
   function removeMeeting(meetingId: MeetingId) {
     setMeetingHistory(removeMeetingId(meetingId));
-    queryClient.removeQueries({ queryKey: meetingMetadataQueryKey(meetingId) });
+    queryClient.removeQueries({
+      queryKey: orpc.meeting.getMeetingMetadata.queryKey({
+        input: { meetingId },
+      }),
+    });
   }
 
   return {

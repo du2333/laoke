@@ -3,8 +3,9 @@ import { toast } from "sonner";
 
 import type { JoinedMeetingHistoryItem } from "@/features/meeting/client/hooks/useMeetingHistory";
 import type { MeetingSession } from "@/features/meeting/schema";
-import { joinMeetingFn } from "@/features/meeting/server/function";
 import type { User } from "@/features/user/client/schema";
+import { orpc } from "@/lib/orpc";
+import { handleORPCError } from "@/lib/orpc/error-handler";
 
 type UseJoinMeetingOptions = {
   user: User | null;
@@ -23,25 +24,9 @@ export function useJoinMeeting({
   onMeetingJoined,
   onTargetJoinFailed,
 }: UseJoinMeetingOptions) {
-  const joinMeetingMutation = useMutation({
-    mutationFn: async ({ meetingId, currentUser }: { meetingId: string; currentUser: User }) => {
-      const data = await joinMeetingFn({
-        data: {
-          meetingId,
-          userId: currentUser.id,
-          userName: currentUser.name,
-          adminToken: adminToken || undefined,
-        },
-      });
+  const joinMeetingMutation = useMutation(orpc.meeting.joinMeeting.mutationOptions());
 
-      return {
-        meetingId,
-        authToken: data.authToken,
-      } satisfies MeetingSession;
-    },
-  });
-
-  async function handleJoinMeeting(targetId?: string) {
+  function handleJoinMeeting(targetId?: string) {
     if (!user) return;
 
     const id = targetId || meetingId.trim();
@@ -49,29 +34,44 @@ export function useJoinMeeting({
 
     const toastId = toast.loading("正在加入频道...");
 
-    try {
-      const result = await joinMeetingMutation.mutateAsync({
+    joinMeetingMutation.mutate(
+      {
         meetingId: id,
-        currentUser: user,
-      });
-
-      onMeetingJoined({
-        meetingId: id,
-        lastJoinedAt: Date.now(),
-      });
-      toast.dismiss(toastId);
-      toast.success("加入成功");
-      onJoinMeeting({
-        meetingId: id,
-        authToken: result.authToken,
-      });
-    } catch (err) {
-      if (targetId) {
-        onTargetJoinFailed(targetId);
-      }
-      toast.dismiss(toastId);
-      toast.error(err instanceof Error ? err.message : "加入失败");
-    }
+        userId: user.id,
+        userName: user.name,
+        adminToken: adminToken || undefined,
+      },
+      {
+        onSuccess: (result) => {
+          onMeetingJoined({
+            meetingId: id,
+            lastJoinedAt: Date.now(),
+          });
+          toast.dismiss(toastId);
+          toast.success("加入成功");
+          onJoinMeeting({
+            meetingId: id,
+            authToken: result.authToken,
+          });
+        },
+        onError: (error) => {
+          if (targetId) {
+            onTargetJoinFailed(targetId);
+          }
+          toast.dismiss(toastId);
+          handleORPCError(error, {
+            defined: {
+              UNAUTHORIZED: () => {
+                toast.error("无效的管理员令牌，请重新输入");
+              },
+            },
+            fallback: (error) => {
+              toast.error(error instanceof Error ? error.message : "加入失败");
+            },
+          });
+        },
+      },
+    );
   }
 
   return {
