@@ -25,6 +25,23 @@ export const openAPIHandler = new OpenAPIHandler(router, {
           title: "Laoke API",
           version: "1.0.0",
         },
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: "http",
+              scheme: "bearer",
+            },
+          },
+        },
+      },
+      docsConfig: {
+        authentication: {
+          securitySchemes: {
+            bearerAuth: {
+              token: "",
+            },
+          },
+        },
       },
     }),
   ],

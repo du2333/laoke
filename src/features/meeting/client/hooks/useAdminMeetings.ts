@@ -2,27 +2,26 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useState } from "react";
 import { toast } from "sonner";
 
+import {
+  clearAdminToken,
+  getAdminToken,
+  saveAdminToken,
+} from "@/features/auth/client/storage/admin-token";
 import type { MeetingId } from "@/features/meeting/schema";
 import { orpc } from "@/lib/orpc";
 import { handleORPCError } from "@/lib/orpc/error-handler";
 
-const ADMIN_TOKEN_STORAGE_KEY = "laoke-admin-token";
 const ADMIN_MEETINGS_PAGE_SIZE = 20;
-
-function getStoredAdminToken() {
-  return localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY) ?? "";
-}
 
 export function useAdminMeetings() {
   const queryClient = useQueryClient();
-  const [adminToken, setAdminToken] = useState(getStoredAdminToken);
-  const [adminTokenInput, setAdminTokenInput] = useState(getStoredAdminToken);
+  const [adminToken, setAdminToken] = useState(getAdminToken);
+  const [adminTokenInput, setAdminTokenInput] = useState(getAdminToken);
   const [newMeetingTitle, setNewMeetingTitle] = useState("");
 
   const adminMeetingsQuery = useInfiniteQuery(
     orpc.meeting.listMeetings.infiniteOptions({
       input: (pageParam: number) => ({
-        adminToken,
         pageNo: pageParam,
         perPage: ADMIN_MEETINGS_PAGE_SIZE,
       }),
@@ -82,13 +81,13 @@ export function useAdminMeetings() {
     const token = adminTokenInput.trim();
     if (!token) return;
 
-    localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, token);
+    saveAdminToken(token);
     setAdminToken(token);
     toast.success("已进入管理模式");
   }
 
   function handleClearAdminToken() {
-    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    clearAdminToken();
     setAdminToken("");
     setAdminTokenInput("");
     queryClient.removeQueries({ queryKey: orpc.meeting.listMeetings.key() });
@@ -102,11 +101,11 @@ export function useAdminMeetings() {
     const title = newMeetingTitle.trim();
     if (!title) return;
 
-    createMeetingMutation.mutate({ title, adminToken });
+    createMeetingMutation.mutate({ title });
   }
 
   function handleDeactivateMeeting(targetMeetingId: MeetingId) {
-    deactivateMeetingMutation.mutate({ meetingId: targetMeetingId, adminToken });
+    deactivateMeetingMutation.mutate({ meetingId: targetMeetingId });
   }
 
   return {

@@ -1,4 +1,3 @@
-import { adminTokenInputSchema } from "@/features/auth/schema";
 import { requireAdmin, resolveAdmin } from "@/features/auth/server/middleware";
 import { admin } from "@/features/auth/server/procedure";
 import { base } from "@/lib/orpc/procedure";
@@ -36,8 +35,9 @@ export const createMeeting = admin
     path: "/admin/meetings",
     summary: "Create meeting",
     tags: ["Admin", "Meetings"],
+    spec: (current) => ({ ...current, security: [{ bearerAuth: [] }] }),
   })
-  .input(createMeetingInputSchema.extend(adminTokenInputSchema.shape))
+  .input(createMeetingInputSchema)
   .output(managedMeetingOutputSchema)
   .use(requireAdmin)
   .handler(async ({ context, input }) =>
@@ -50,8 +50,9 @@ export const listMeetings = admin
     path: "/admin/meetings",
     summary: "List meetings",
     tags: ["Admin", "Meetings"],
+    spec: (current) => ({ ...current, security: [{ bearerAuth: [] }] }),
   })
-  .input(listMeetingsInputSchema.extend(adminTokenInputSchema.shape))
+  .input(listMeetingsInputSchema)
   .output(managedMeetingListOutputSchema)
   .use(requireAdmin)
   .handler(async ({ context, input }) => meetingService.listMeetings(context.env, input));
@@ -62,8 +63,9 @@ export const deactivateMeeting = admin
     path: "/admin/meetings/{meetingId}/deactivate",
     summary: "Deactivate meeting",
     tags: ["Admin", "Meetings"],
+    spec: (current) => ({ ...current, security: [{ bearerAuth: [] }] }),
   })
-  .input(deactivateMeetingInputSchema.extend(adminTokenInputSchema.shape))
+  .input(deactivateMeetingInputSchema)
   .output(managedMeetingOutputSchema)
   .use(requireAdmin)
   .handler(async ({ context, input }) =>

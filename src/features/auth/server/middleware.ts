@@ -1,27 +1,36 @@
-import type { AdminTokenInput } from "@/features/auth/schema";
-
 import { isAdmin } from "./auth";
 import { admin } from "./procedure";
 
-export const requireAdmin = admin.middleware(
-  async ({ context, next, errors }, input: AdminTokenInput) => {
-    if (!isAdmin(context.env, input.adminToken)) {
-      throw errors.UNAUTHORIZED();
-    }
-    return await next();
-  },
-);
+function getAdminToken(headers: Headers) {
+  const authorization = headers.get("authorization");
+  if (!authorization) return null;
 
-export const resolveAdmin = admin.middleware(
-  async ({ context, next, errors }, input: { adminToken?: string }) => {
-    if (!input.adminToken) {
-      return next({ context: { isAdmin: false } });
-    }
+  const [scheme, token] = authorization.split(/\s+/, 2);
+  if (scheme?.toLowerCase() !== "bearer") return null;
 
-    if (!isAdmin(context.env, input.adminToken)) {
-      throw errors.UNAUTHORIZED();
-    }
+  return token?.trim() || null;
+}
 
-    return next({ context: { isAdmin: true } });
-  },
-);
+export const requireAdmin = admin.middleware(async ({ context, next, errors }) => {
+  const adminToken = getAdminToken(context.headers);
+
+  if (!adminToken || !isAdmin(context.env, adminToken)) {
+    throw errors.UNAUTHORIZED();
+  }
+
+  return await next();
+});
+
+export const resolveAdmin = admin.middleware(async ({ context, next, errors }) => {
+  const adminToken = getAdminToken(context.headers);
+
+  if (!adminToken) {
+    return next({ context: { isAdmin: false } });
+  }
+
+  if (!isAdmin(context.env, adminToken)) {
+    throw errors.UNAUTHORIZED();
+  }
+
+  return next({ context: { isAdmin: true } });
+});

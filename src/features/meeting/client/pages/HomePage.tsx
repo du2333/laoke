@@ -26,7 +26,6 @@ export function HomePage() {
   const joinMeeting = useJoinMeeting({
     user,
     meetingId,
-    adminToken: adminMeetings.adminToken,
     onJoinMeeting: handleJoinMeeting,
     onMeetingJoined: meetingHistory.saveJoinedMeeting,
     onTargetJoinFailed: meetingHistory.removeMeeting,

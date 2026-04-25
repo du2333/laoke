@@ -10,7 +10,6 @@ export const joinMeetingInputSchema = z.object({
   meetingId: meetingIdSchema,
   userId: z.string().trim().min(1),
   userName: z.string().trim().min(1).max(20),
-  adminToken: z.string().min(1).optional(),
 });
 
 export const getMeetingMetadataInputSchema = z.object({

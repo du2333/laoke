@@ -11,7 +11,6 @@ import { handleORPCError } from "@/lib/orpc/error-handler";
 type UseJoinMeetingOptions = {
   user: User | null;
   meetingId: string;
-  adminToken: string;
   onJoinMeeting: (session: MeetingSession) => void;
   onMeetingJoined: (item: JoinedMeetingHistoryItem) => void;
   onTargetJoinFailed: (meetingId: string) => void;
@@ -20,7 +19,6 @@ type UseJoinMeetingOptions = {
 export function useJoinMeeting({
   user,
   meetingId,
-  adminToken,
   onJoinMeeting,
   onMeetingJoined,
   onTargetJoinFailed,
@@ -68,7 +66,6 @@ export function useJoinMeeting({
       meetingId: id,
       userId: user.id,
       userName: user.name,
-      adminToken: adminToken || undefined,
     });
   }
 

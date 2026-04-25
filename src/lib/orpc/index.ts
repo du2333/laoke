@@ -5,10 +5,17 @@ import { OpenAPILink } from "@orpc/openapi-client/fetch";
 import { createRouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { createIsomorphicFn, getGlobalStartContext } from "@tanstack/react-start";
+import { getRequestHeaders } from "@tanstack/react-start/server";
+
+import { getAdminToken } from "@/features/auth/client/storage/admin-token";
 
 import { router } from "./router";
 
 type AppORPCClient = ContractRouterClient<typeof router>;
+
+function adminAuthorizationHeader(adminToken?: string): Record<string, string> {
+  return adminToken ? { Authorization: `Bearer ${adminToken}` } : {};
+}
 
 const getORPCClient = createIsomorphicFn()
   .server(() =>
@@ -20,6 +27,7 @@ const getORPCClient = createIsomorphicFn()
         }
         return {
           env: context.env,
+          headers: getRequestHeaders(),
         };
       },
     }),
@@ -27,6 +35,7 @@ const getORPCClient = createIsomorphicFn()
   .client((): AppORPCClient => {
     const link = new OpenAPILink(router, {
       url: `${window.location.origin}/api`,
+      headers: () => adminAuthorizationHeader(getAdminToken()),
       plugins: [new ResponseValidationPlugin(router)],
     });
 

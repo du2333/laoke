@@ -10,6 +10,7 @@ export const Route = createFileRoute("/api/$")({
           prefix: "/api",
           context: {
             env: context.env,
+            headers: request.headers,
           },
         });
         return response ?? new Response("Not Found", { status: 404 });
