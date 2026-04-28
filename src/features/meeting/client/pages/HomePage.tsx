@@ -1,12 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-import { AdminMeetingsPanel } from "@/features/meeting/client/components/AdminMeetingsPanel";
+import { AdminMeetingsPanel } from "@/features/meeting/client/components/admin-meetings/AdminMeetingsPanel";
 import { JoinMeetingPanel } from "@/features/meeting/client/components/JoinMeetingPanel";
 import { Onboarding } from "@/features/meeting/client/components/Onboarding";
 import { RecentMeetings } from "@/features/meeting/client/components/RecentMeetings";
 import { UserProfile } from "@/features/meeting/client/components/UserProfile";
-import { useAdminMeetings } from "@/features/meeting/client/hooks/useAdminMeetings";
 import { useJoinMeeting } from "@/features/meeting/client/hooks/useJoinMeeting";
 import { useMeetingHistory } from "@/features/meeting/client/hooks/useMeetingHistory";
 import { saveCurrentMeetingSession } from "@/features/meeting/client/storage/current-meeting";
@@ -22,7 +21,6 @@ export function HomePage() {
   const [renameValue, setRenameValue] = useState("");
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const meetingHistory = useMeetingHistory();
-  const adminMeetings = useAdminMeetings();
   const joinMeeting = useJoinMeeting({
     user,
     meetingId,
@@ -100,25 +98,6 @@ export function HomePage() {
                 />
                 <div className="relative z-10 w-full max-w-lg animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                   <AdminMeetingsPanel
-                    adminToken={adminMeetings.adminToken}
-                    adminTokenInput={adminMeetings.adminTokenInput}
-                    setAdminTokenInput={adminMeetings.setAdminTokenInput}
-                    newMeetingTitle={adminMeetings.newMeetingTitle}
-                    setNewMeetingTitle={adminMeetings.setNewMeetingTitle}
-                    adminMeetings={adminMeetings.adminMeetings}
-                    adminMeetingsLoading={adminMeetings.adminMeetingsLoading}
-                    adminMeetingsError={adminMeetings.adminMeetingsError}
-                    adminMeetingsHasMore={adminMeetings.adminMeetingsHasMore}
-                    adminMeetingsLoadingMore={adminMeetings.adminMeetingsLoadingMore}
-                    creatingMeeting={adminMeetings.creatingMeeting}
-                    deactivatingMeetingId={adminMeetings.deactivatingMeetingId}
-                    onSaveAdminToken={adminMeetings.handleSaveAdminToken}
-                    onClearAdminToken={() => {
-                      adminMeetings.handleClearAdminToken();
-                    }}
-                    onCreateMeeting={adminMeetings.handleCreateMeeting}
-                    onDeactivateMeeting={adminMeetings.handleDeactivateMeeting}
-                    onLoadMoreMeetings={adminMeetings.handleLoadMoreMeetings}
                     onJoinMeeting={joinMeeting.handleJoinMeeting}
                     onClose={() => setShowAdminPanel(false)}
                   />
