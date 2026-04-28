@@ -3,5 +3,6 @@
   "entry": ["src/server-entry.ts"],
   "rules": {
     "unused-dependencies": "warn"
-  }
+  },
+  "ignorePatterns": ["worker-configuration.d.ts"]
 }
