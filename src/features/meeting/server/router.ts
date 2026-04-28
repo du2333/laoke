@@ -18,7 +18,7 @@ import * as meetingService from "./service";
 const HOST_PRESET_NAME = "group_call_host";
 const PARTICIPANT_PRESET_NAME = "group_call_participant";
 
-export const getMeetingMetadata = base
+const getMeetingMetadata = base
   .route({
     method: "GET",
     path: "/meetings/{meetingId}/metadata",
@@ -29,7 +29,7 @@ export const getMeetingMetadata = base
   .output(meetingMetadataOutputSchema)
   .handler(async ({ context, input }) => meetingService.getMeetingMetadata(context.env, input));
 
-export const createMeeting = admin
+const createMeeting = admin
   .route({
     method: "POST",
     path: "/admin/meetings",
@@ -43,7 +43,7 @@ export const createMeeting = admin
     meetingService.createMeeting(context.env, { title: input.title }),
   );
 
-export const listMeetings = admin
+const listMeetings = admin
   .route({
     method: "GET",
     path: "/admin/meetings",
@@ -55,7 +55,7 @@ export const listMeetings = admin
   .use(requireAdmin)
   .handler(async ({ context, input }) => meetingService.listMeetings(context.env, input));
 
-export const deactivateMeeting = admin
+const deactivateMeeting = admin
   .route({
     method: "POST",
     path: "/admin/meetings/{meetingId}/deactivate",
@@ -69,7 +69,7 @@ export const deactivateMeeting = admin
     meetingService.deactivateMeeting(context.env, { meetingId: input.meetingId }),
   );
 
-export const joinMeeting = admin
+const joinMeeting = admin
   .route({
     method: "POST",
     path: "/meetings/{meetingId}/join",

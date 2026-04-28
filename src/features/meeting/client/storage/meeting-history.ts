@@ -11,7 +11,7 @@ const meetingHistoryItemSchema = z.object({
 const meetingIdHistorySchema = z.array(meetingHistoryItemSchema);
 
 export type MeetingHistoryItem = z.infer<typeof meetingHistoryItemSchema>;
-export type MeetingIdHistory = z.infer<typeof meetingIdHistorySchema>;
+type MeetingIdHistory = z.infer<typeof meetingIdHistorySchema>;
 
 const STORAGE_KEY = "laoke_meeting_history";
 const MAX_HISTORY_ITEMS = 10;
@@ -73,13 +73,5 @@ export const removeMeetingId = createClientOnlyFn((meetingId: MeetingId): Meetin
     return nextHistory;
   } catch {
     return getMeetingHistory();
-  }
-});
-
-export const clearMeetingHistory = createClientOnlyFn((): void => {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // Ignore storage errors
   }
 });

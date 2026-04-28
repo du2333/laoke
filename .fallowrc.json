@@ -1,8 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "entry": [
-    "src/server-entry.ts"
-  ],
+  "entry": ["src/server-entry.ts"],
   "rules": {
     "unused-dependencies": "warn"
   }

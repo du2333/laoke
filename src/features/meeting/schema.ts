@@ -50,7 +50,6 @@ export const managedMeetingListOutputSchema = z.object({
 
 export type MeetingId = z.infer<typeof meetingIdSchema>;
 export type CreateMeetingInput = z.infer<typeof createMeetingInputSchema>;
-export type JoinMeetingInput = z.infer<typeof joinMeetingInputSchema>;
 export type GetMeetingMetadataInput = z.infer<typeof getMeetingMetadataInputSchema>;
 export type DeactivateMeetingInput = z.infer<typeof deactivateMeetingInputSchema>;
 export type ListMeetingsInput = z.infer<typeof listMeetingsInputSchema>;
