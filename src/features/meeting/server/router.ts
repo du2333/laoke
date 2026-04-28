@@ -88,7 +88,7 @@ const joinMeeting = admin
     }),
   );
 
-export const meetingRouter = {
+export default {
   getMeetingMetadata,
   createMeeting,
   listMeetings,
