@@ -8,7 +8,10 @@ Laoke is a meeting application for joining recent meetings and managing meetings
 A joinable conversation space identified by a meeting ID.
 
 **Admin Mode**:
-The privileged user state that allows meeting management actions.
+The privileged user state entered only after the server accepts the admin password.
+
+**Admin Password Verification**:
+The check that must succeed before a user enters **Admin Mode**.
 
 **Delete Meeting**:
 A user-facing admin action that removes a meeting from the active management list.
@@ -18,6 +21,7 @@ _Avoid_: Deactivate meeting
 
 - **Admin Mode** allows an admin to create and **Delete Meeting** entries.
 - A **Meeting** can appear in the active management list until it is deleted.
+- **Admin Password Verification** gates entry into **Admin Mode**.
 
 ## Example Dialogue
 
@@ -27,3 +31,4 @@ _Avoid_: Deactivate meeting
 ## Flagged Ambiguities
 
 - "Deactivate meeting" describes an implementation-level status change, but the product language is **Delete Meeting**.
+- Entering **Admin Mode** requires server acceptance of the admin password; locally storing a password is not enough.

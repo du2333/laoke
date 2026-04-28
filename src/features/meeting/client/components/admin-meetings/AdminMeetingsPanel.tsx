@@ -46,11 +46,12 @@ export function AdminMeetingsPanel({ onJoinMeeting, onClose }: AdminMeetingsPane
         </div>
 
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-          {!adminMeetings.adminToken ? (
+          {!adminMeetings.adminPassword ? (
             <AdminLoginForm
-              adminTokenInput={adminMeetings.adminTokenInput}
-              setAdminTokenInput={adminMeetings.setAdminTokenInput}
-              onSaveAdminToken={adminMeetings.handleSaveAdminToken}
+              adminPasswordInput={adminMeetings.adminPasswordInput}
+              setAdminPasswordInput={adminMeetings.setAdminPasswordInput}
+              verifyingAdminPassword={adminMeetings.verifyingAdminPassword}
+              onSaveAdminPassword={adminMeetings.handleSaveAdminPassword}
             />
           ) : (
             <div className="space-y-5 pb-4">
@@ -75,7 +76,7 @@ export function AdminMeetingsPanel({ onJoinMeeting, onClose }: AdminMeetingsPane
 
               <div className="pt-4 flex justify-center">
                 <button
-                  onClick={adminMeetings.handleClearAdminToken}
+                  onClick={adminMeetings.handleClearAdminPassword}
                   className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
                 >
                   退出管理模式

@@ -3,7 +3,7 @@ import { oo } from "@orpc/openapi";
 import { isAdmin } from "./auth";
 import { admin } from "./procedure";
 
-function getAdminToken(headers: Headers) {
+function getAdminPassword(headers: Headers) {
   const authorization = headers.get("authorization");
   if (!authorization) return null;
 
@@ -15,9 +15,9 @@ function getAdminToken(headers: Headers) {
 
 export const requireAdmin = oo.spec(
   admin.middleware(async ({ context, next, errors }) => {
-    const adminToken = getAdminToken(context.headers);
+    const adminPassword = getAdminPassword(context.headers);
 
-    if (!adminToken || !isAdmin(context.env, adminToken)) {
+    if (!adminPassword || !isAdmin(context.env, adminPassword)) {
       throw errors.UNAUTHORIZED();
     }
 
@@ -27,13 +27,13 @@ export const requireAdmin = oo.spec(
 );
 
 export const resolveAdmin = admin.middleware(async ({ context, next, errors }) => {
-  const adminToken = getAdminToken(context.headers);
+  const adminPassword = getAdminPassword(context.headers);
 
-  if (!adminToken) {
+  if (!adminPassword) {
     return next({ context: { isAdmin: false } });
   }
 
-  if (!isAdmin(context.env, adminToken)) {
+  if (!isAdmin(context.env, adminPassword)) {
     throw errors.UNAUTHORIZED();
   }
 

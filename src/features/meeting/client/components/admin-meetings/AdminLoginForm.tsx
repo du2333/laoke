@@ -1,16 +1,20 @@
-import { ArrowRight, KeyRound } from "lucide-react";
+import { ArrowRight, KeyRound, Loader2 } from "lucide-react";
 
 type AdminLoginFormProps = {
-  adminTokenInput: string;
-  setAdminTokenInput: (value: string) => void;
-  onSaveAdminToken: () => void;
+  adminPasswordInput: string;
+  setAdminPasswordInput: (value: string) => void;
+  verifyingAdminPassword: boolean;
+  onSaveAdminPassword: () => void;
 };
 
 export function AdminLoginForm({
-  adminTokenInput,
-  setAdminTokenInput,
-  onSaveAdminToken,
+  adminPasswordInput,
+  setAdminPasswordInput,
+  verifyingAdminPassword,
+  onSaveAdminPassword,
 }: AdminLoginFormProps) {
+  const hasAdminPassword = Boolean(adminPasswordInput.trim());
+
   return (
     <div className="space-y-4">
       <div className="relative group">
@@ -19,20 +23,27 @@ export function AdminLoginForm({
         </div>
         <input
           type="password"
-          value={adminTokenInput}
-          onChange={(event) => setAdminTokenInput(event.target.value)}
-          onKeyDown={(event) => event.key === "Enter" && onSaveAdminToken()}
+          value={adminPasswordInput}
+          onChange={(event) => setAdminPasswordInput(event.target.value)}
+          onKeyDown={(event) => event.key === "Enter" && onSaveAdminPassword()}
           placeholder="输入管理密码"
           className="w-full bg-zinc-950/40 border border-white/10 rounded-2xl py-4 pl-12 pr-14 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all text-sm font-medium"
+          disabled={verifyingAdminPassword}
           autoFocus
         />
         <div className="absolute top-1/2 -translate-y-1/2 right-2">
           <button
-            onClick={onSaveAdminToken}
-            disabled={!adminTokenInput.trim()}
-            className="flex items-center justify-center w-10 h-10 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white rounded-xl disabled:opacity-0 disabled:pointer-events-none transition-all duration-300 active:scale-95"
+            onClick={onSaveAdminPassword}
+            disabled={!hasAdminPassword || verifyingAdminPassword}
+            className={`flex items-center justify-center w-10 h-10 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white rounded-xl transition-all duration-300 active:scale-95 ${
+              hasAdminPassword ? "" : "opacity-0 pointer-events-none"
+            } ${verifyingAdminPassword ? "opacity-70 pointer-events-none" : ""}`}
           >
-            <ArrowRight className="w-4 h-4" />
+            {verifyingAdminPassword ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ArrowRight className="w-4 h-4" />
+            )}
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { getServerEnv } from "@/lib/env";
 
-export function isAdmin(env: Env, adminToken: string) {
+export function isAdmin(env: Env, adminPassword: string) {
   const { ADMIN_TOKEN } = getServerEnv(env);
-  return adminToken === ADMIN_TOKEN;
+  return adminPassword === ADMIN_TOKEN;
 }

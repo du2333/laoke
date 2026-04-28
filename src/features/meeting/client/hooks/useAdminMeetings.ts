@@ -3,10 +3,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import {
-  clearAdminToken,
-  getAdminToken,
-  saveAdminToken,
-} from "@/features/auth/client/storage/admin-token";
+  clearAdminPassword,
+  getAdminPassword,
+  saveAdminPassword,
+} from "@/features/auth/client/storage/admin-password";
 import type { MeetingId } from "@/features/meeting/schema";
 import { orpc } from "@/lib/orpc";
 import { handleORPCError } from "@/lib/orpc/error-handler";
@@ -15,8 +15,8 @@ const ADMIN_MEETINGS_PAGE_SIZE = 20;
 
 export function useAdminMeetings() {
   const queryClient = useQueryClient();
-  const [adminToken, setAdminToken] = useState(getAdminToken);
-  const [adminTokenInput, setAdminTokenInput] = useState(getAdminToken);
+  const [adminPassword, setAdminPassword] = useState(getAdminPassword);
+  const [adminPasswordInput, setAdminPasswordInput] = useState(getAdminPassword);
   const [newMeetingTitle, setNewMeetingTitle] = useState("");
 
   const adminMeetingsQuery = useInfiniteQuery(
@@ -27,8 +27,30 @@ export function useAdminMeetings() {
       }),
       initialPageParam: 1,
       getNextPageParam: (lastPage) => lastPage.nextPageNo ?? undefined,
-      enabled: Boolean(adminToken),
+      enabled: Boolean(adminPassword),
       staleTime: 15_000,
+    }),
+  );
+
+  const verifyAdminPasswordMutation = useMutation(
+    orpc.auth.verifyAdminPassword.mutationOptions({
+      onSuccess: (_data, input) => {
+        saveAdminPassword(input.adminPassword);
+        setAdminPassword(input.adminPassword);
+        toast.success("已进入管理模式");
+      },
+      onError: (error) => {
+        handleORPCError(error, {
+          defined: {
+            UNAUTHORIZED: () => {
+              toast.error("管理密码不正确");
+            },
+          },
+          fallback: (error) => {
+            toast.error(error instanceof Error ? error.message : "验证管理密码失败");
+          },
+        });
+      },
     }),
   );
 
@@ -43,8 +65,8 @@ export function useAdminMeetings() {
         handleORPCError(error, {
           defined: {
             UNAUTHORIZED: () => {
-              toast.error("无效的管理员令牌，请重新输入");
-              handleClearAdminToken();
+              toast.error("管理密码已失效，请重新输入");
+              handleClearAdminPassword();
             },
           },
           fallback: (error) => {
@@ -65,8 +87,8 @@ export function useAdminMeetings() {
         handleORPCError(error, {
           defined: {
             UNAUTHORIZED: () => {
-              toast.error("无效的管理员令牌，请重新输入");
-              handleClearAdminToken();
+              toast.error("管理密码已失效，请重新输入");
+              handleClearAdminPassword();
             },
           },
           fallback: (error) => {
@@ -77,19 +99,17 @@ export function useAdminMeetings() {
     }),
   );
 
-  function handleSaveAdminToken() {
-    const token = adminTokenInput.trim();
-    if (!token) return;
+  function handleSaveAdminPassword() {
+    const adminPassword = adminPasswordInput.trim();
+    if (!adminPassword) return;
 
-    saveAdminToken(token);
-    setAdminToken(token);
-    toast.success("已进入管理模式");
+    verifyAdminPasswordMutation.mutate({ adminPassword });
   }
 
-  function handleClearAdminToken() {
-    clearAdminToken();
-    setAdminToken("");
-    setAdminTokenInput("");
+  function handleClearAdminPassword() {
+    clearAdminPassword();
+    setAdminPassword("");
+    setAdminPasswordInput("");
     queryClient.removeQueries({ queryKey: orpc.meeting.listMeetings.key() });
   }
 
@@ -109,9 +129,10 @@ export function useAdminMeetings() {
   }
 
   return {
-    adminToken,
-    adminTokenInput,
-    setAdminTokenInput,
+    adminPassword,
+    adminPasswordInput,
+    setAdminPasswordInput,
+    verifyingAdminPassword: verifyAdminPasswordMutation.isPending,
     newMeetingTitle,
     setNewMeetingTitle,
     adminMeetings:
@@ -126,8 +147,8 @@ export function useAdminMeetings() {
     deactivatingMeetingId: deactivateMeetingMutation.isPending
       ? deactivateMeetingMutation.variables?.meetingId
       : undefined,
-    handleSaveAdminToken,
-    handleClearAdminToken,
+    handleSaveAdminPassword,
+    handleClearAdminPassword,
     handleCreateMeeting,
     handleDeactivateMeeting,
     handleLoadMoreMeetings,
